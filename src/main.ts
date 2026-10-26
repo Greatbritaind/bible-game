@@ -64,15 +64,26 @@ function readGameIni(game: GameFiles): Record<string, string> {
 }
 
 // ---------------------------------------------------------------- downloads
-async function download(url: string, onProgress: (got: number, total: number) => void): Promise<Uint8Array<ArrayBuffer>> {
-  const res = await fetch(url);
-  if (!res.ok || !res.body) throw new Error(`Could not download ${url} (${res.status})`);
+/** Reads a response body with progress. Gives up if no data arrives for `stallMs`. */
+async function readBody(
+  res: Response,
+  onProgress: (got: number, total: number) => void,
+  stallMs = 0,
+): Promise<Uint8Array<ArrayBuffer>> {
+  if (!res.body) throw new Error("empty response");
   const total = Number(res.headers.get("content-length")) || 0;
   const reader = res.body.getReader();
   const chunks: Uint8Array[] = [];
   let got = 0;
   for (;;) {
-    const { done, value } = await reader.read();
+    let timer = 0;
+    const next = reader.read();
+    const { done, value } = stallMs
+      ? await Promise.race([
+          next,
+          new Promise<never>((_, reject) => (timer = window.setTimeout(() => reject(new Error("stalled")), stallMs))),
+        ]).finally(() => clearTimeout(timer))
+      : await next;
     if (done) break;
     chunks.push(value);
     got += value.length;
@@ -87,17 +98,44 @@ async function download(url: string, onProgress: (got: number, total: number) =>
   return out;
 }
 
+async function download(url: string, onProgress: (got: number, total: number) => void): Promise<Uint8Array<ArrayBuffer>> {
+  const res = await fetch(url);
+  if (!res.ok || !res.body) throw new Error(`Could not download ${url} (${res.status})`);
+  return readBody(res, onProgress);
+}
+
 // Keeps a copy of the big files in the browser so each visit doesn't download ~120 MB again.
 // versions.json (written by the build) changes only when a file's contents change.
 const FILE_CACHE = "game-files-v1";
 
 async function fileVersions(): Promise<Record<string, string>> {
+  if (new URLSearchParams(location.search).has("fresh")) {
+    // ?fresh throws away the saved copy (in case it ever gets stuck)
+    try {
+      await caches.delete(FILE_CACHE);
+    } catch {
+      /* ignore */
+    }
+    return {};
+  }
   try {
-    const res = await fetch("versions.json", { cache: "no-store" });
+    const ctl = new AbortController();
+    const timer = setTimeout(() => ctl.abort(), 8000);
+    const res = await fetch("versions.json", { cache: "no-store", signal: ctl.signal });
+    clearTimeout(timer);
     return res.ok ? await res.json() : {};
   } catch {
     return {};
   }
+}
+
+/** Promise that rejects after `ms` (so a stuck browser storage call can't freeze the start screen). */
+function within<T>(p: Promise<T>, ms: number): Promise<T> {
+  let timer = 0;
+  return Promise.race([
+    p,
+    new Promise<never>((_, reject) => (timer = window.setTimeout(() => reject(new Error("timed out")), ms))),
+  ]).finally(() => clearTimeout(timer));
 }
 
 async function cachedDownload(
@@ -109,26 +147,32 @@ async function cachedDownload(
   const key = new URL(`${name}?v=${version}`, location.href).href;
   let cache: Cache | null = null;
   try {
-    cache = await caches.open(FILE_CACHE);
-    const hit = await cache.match(key);
+    cache = await within(caches.open(FILE_CACHE), 8000);
+    const hit = await within(cache.match(key), 8000);
     if (hit) {
-      const bytes = new Uint8Array(await hit.arrayBuffer());
-      onProgress(bytes.length, bytes.length);
+      const bytes = await readBody(hit, onProgress, 10000);
       log(`${name}: using saved copy`);
       return bytes;
     }
-  } catch {
-    cache = null; // storage blocked: just download
+  } catch (e) {
+    // the saved copy is unreadable: throw it away and download instead
+    log(`${name}: saved copy not usable (${e}), downloading`);
+    cache = null;
+    void caches.delete(FILE_CACHE).catch(() => {});
   }
   const bytes = await download(key, onProgress);
   if (cache) {
-    try {
-      // drop older copies first so there's room
-      for (const req of await cache.keys()) if (new URL(req.url).pathname.endsWith(`/${name}`)) await cache.delete(req);
-      await cache.put(key, new Response(bytes, { headers: { "content-type": "application/octet-stream" } }));
-    } catch (e) {
-      log(`${name}: could not keep a copy (${e})`);
-    }
+    const c = cache;
+    // save in the background; the game doesn't wait for it
+    void (async () => {
+      try {
+        for (const req of await c.keys()) if (new URL(req.url).pathname.endsWith(`/${name}`)) await c.delete(req);
+        await c.put(key, new Response(bytes, { headers: { "content-type": "application/octet-stream", "content-length": String(bytes.length) } }));
+        log(`${name}: saved a copy`);
+      } catch (e) {
+        log(`${name}: could not keep a copy (${e})`);
+      }
+    })();
   }
   return bytes;
 }
