@@ -87,6 +87,52 @@ async function download(url: string, onProgress: (got: number, total: number) =>
   return out;
 }
 
+// Keeps a copy of the big files in the browser so each visit doesn't download ~120 MB again.
+// versions.json (written by the build) changes only when a file's contents change.
+const FILE_CACHE = "game-files-v1";
+
+async function fileVersions(): Promise<Record<string, string>> {
+  try {
+    const res = await fetch("versions.json", { cache: "no-store" });
+    return res.ok ? await res.json() : {};
+  } catch {
+    return {};
+  }
+}
+
+async function cachedDownload(
+  name: string,
+  version: string | undefined,
+  onProgress: (got: number, total: number) => void,
+): Promise<Uint8Array<ArrayBuffer>> {
+  if (!version || typeof caches === "undefined") return download(name, onProgress);
+  const key = new URL(`${name}?v=${version}`, location.href).href;
+  let cache: Cache | null = null;
+  try {
+    cache = await caches.open(FILE_CACHE);
+    const hit = await cache.match(key);
+    if (hit) {
+      const bytes = new Uint8Array(await hit.arrayBuffer());
+      onProgress(bytes.length, bytes.length);
+      log(`${name}: using saved copy`);
+      return bytes;
+    }
+  } catch {
+    cache = null; // storage blocked: just download
+  }
+  const bytes = await download(key, onProgress);
+  if (cache) {
+    try {
+      // drop older copies first so there's room
+      for (const req of await cache.keys()) if (new URL(req.url).pathname.endsWith(`/${name}`)) await cache.delete(req);
+      await cache.put(key, new Response(bytes, { headers: { "content-type": "application/octet-stream" } }));
+    } catch (e) {
+      log(`${name}: could not keep a copy (${e})`);
+    }
+  }
+  return bytes;
+}
+
 interface Prepared {
   shared: SharedBuffers;
   game: GameFiles;
@@ -108,9 +154,10 @@ async function prepare(): Promise<Prepared> {
     $("bar-fill").style.width = `${Math.round(f * 100)}%`;
     $("play-label").textContent = `Getting ready… ${Math.round(f * 100)}%`;
   };
+  const versions = await fileVersions();
   const [archive, rubyBytes] = await Promise.all([
-    download("game.mkxpz", (g, t) => ((progress.game = [g, t]), update())),
-    download("ruby.wasm", (g, t) => ((progress.ruby = [g, t]), update())),
+    cachedDownload("game.mkxpz", versions["game.mkxpz"], (g, t) => ((progress.game = [g, t]), update())),
+    cachedDownload("ruby.wasm", versions["ruby.wasm"], (g, t) => ((progress.ruby = [g, t]), update())),
   ]);
   log("downloaded");
   setStatus("Starting up…");

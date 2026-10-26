@@ -44,6 +44,11 @@ jobs:
           grep '"windowTitle"' mkxp.json
           # Files are stored uncompressed so the player can read them without unpacking
           rpzip -r ../public/game.mkxpz ./*
+          # Content fingerprints: players' browsers re-download a file only when it really changed
+          GAME_V=$(find . -type f -print0 | sort -z | xargs -0 sha256sum | sha256sum | cut -c1-16)
+          RUBY_V=$(sha256sum ../public/ruby.wasm | cut -c1-16)
+          echo "{\"game.mkxpz\": \"$GAME_V\", \"ruby.wasm\": \"$RUBY_V\"}" > ../public/versions.json
+          cat ../public/versions.json
           ls -lh ../public
 
       - name: Build the page
