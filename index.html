@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bible Game</title>
+    <style>
+      html, body { margin: 0; height: 100%; background: #000; color: #fff; font-family: system-ui, sans-serif; }
+      #screen { position: fixed; inset: 0; margin: auto; max-width: 100%; max-height: 100%; width: 100vw; height: calc(100vw * 0.75); max-height: 100vh; max-width: calc(100vh / 0.75); image-rendering: pixelated; outline: none; }
+      #status { position: fixed; left: 0; right: 0; bottom: 12px; text-align: center; font-size: 18px; }
+      .box { position: fixed; inset: 0; display: grid; place-items: center; background: rgba(0,0,0,.6); }
+      .box > div { max-width: min(640px, 92vw); max-height: 80vh; overflow: auto; background: #f6e7c8; color: #1b2347; border: 4px solid #1b2347; border-radius: 6px; padding: 16px; }
+      .box pre { white-space: pre-wrap; font-size: 14px; }
+      [hidden] { display: none !important; }
+    </style>
+  </head>
+  <body>
+    <canvas id="screen" tabindex="0"></canvas>
+    <div id="status" role="status"></div>
+    <div id="message" class="box" hidden data-ui><div><pre id="message-text"></pre><button id="message-ok">OK</button></div></div>
+    <div id="error" class="box" hidden data-ui><div><strong>The game hit an error.</strong><pre id="error-text"></pre></div></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
