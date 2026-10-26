@@ -16,7 +16,7 @@ Plays the RPG Maker XP / Pokémon Essentials game in `game/` in a web browser, i
 2. Commit and push to `main`. GitHub Desktop is the easiest way.
 3. Wait for the green check on the **Actions** tab (a few minutes), then refresh the game page.
 
-Keep `windowTitle` in `mkxp.json` the same. Saves are stored under the game's title.
+The build always names the game "Bible Game" (saves are stored under that name), whatever `mkxp.json` says.
 
 ## Controls
 
