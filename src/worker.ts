@@ -99,7 +99,7 @@ async function run(start: StartMessage) {
       return (origFrame as (...x: unknown[]) => unknown)(...(a as unknown[]));
     }) as never;
   }
-  const frame = api.frame;
+  const frame = api.frame as (sync: string) => void;
   (self as unknown as { RGSS: unknown }).RGSS = {
     ...api,
     frame: (sync: string) => {

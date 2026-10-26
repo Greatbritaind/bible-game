@@ -109,7 +109,6 @@ export class Engine {
   private transitionProgress = -1;
   private brightness = 255;
   private scratch: [Canvas, Ctx];
-  private scratch2: [Canvas, Ctx];
 
   private fontFamilies = new Map<string, string>(); // lower-case name -> CSS family
   private fontMetrics = new Map<string, { asc: number; desc: number; upm: number }>(); // CSS family -> hhea metrics
@@ -138,7 +137,6 @@ export class Engine {
     [this.back, this.backCtx] = newCanvasRead(this.width, this.height);
     this.out = newCanvas(this.width, this.height);
     this.scratch = newCanvasRead(64, 64);
-    this.scratch2 = newCanvasRead(64, 64);
     this.measure = newCanvas(8, 8)[1];
     this.resizeScreen(640, 480);
   }
@@ -860,15 +858,6 @@ export class Engine {
     ctx.restore();
   }
 
-  private scratchFor2(w: number, h: number): [Canvas, Ctx] {
-    const [c, ctx] = this.scratch2;
-    if (c.width < w || c.height < h) {
-      c.width = Math.max(c.width, w);
-      c.height = Math.max(c.height, h);
-      ctx.imageSmoothingEnabled = false;
-    }
-    return this.scratch2;
-  }
 
   private drawPlane(ctx: Ctx, p: PlaneRec, offX: number, offY: number, vw: number, vh: number, vp?: ViewportRec) {
     if (p.opacity <= 0) return;
