@@ -1,0 +1,171 @@
+﻿# See the documentation on the wiki to learn how to edit this file.
+#-------------------------------
+[CAMPER,Liam]
+LoseText = A very good battle, indeed!
+Pokemon = DIGLETT,10
+Pokemon = BONSLY,11
+#-------------------------------
+[LEADER_Brock,Brock]
+Items = FULLRESTORE,FULLRESTORE
+LoseText = Very good.
+Pokemon = GEODUDE,12
+    Moves = DEFENSECURL,HEADSMASH,ROCKPOLISH,ROCKTHROW
+    AbilityIndex = 0
+    Gender = male
+    IV = 20,20,20,20,20,20
+Pokemon = ONIX,14
+    Name = Rocky
+    Moves = HEADSMASH,ROCKTHROW,RAGE,ROCKTOMB
+    AbilityIndex = 0
+    Item = SITRUSBERRY
+    Gender = male
+    IV = 20,20,20,20,20,20
+    Shiny = true
+    Ball = HEAVYBALL
+#-------------------------------
+[TEAMROCKET_M,Grunt,1]
+LoseText = You're too good for me!
+Pokemon = WEEPINBELL,21
+    Shadow = true
+#-------------------------------
+[TEAMROCKET_F,Grunt,1]
+LoseText = You're too good for me!
+Pokemon = BURMY,19
+Pokemon = WINGULL,19
+Pokemon = ELECTABUZZ,20
+    Shadow = true
+#-------------------------------
+[YOUNGSTER,Ben]
+LoseText = Aww, I lost.
+Pokemon = RATTATA,11
+Pokemon = EKANS,11
+#-------------------------------
+[CAMPER,Jeff]
+LoseText = A very good battle, indeed!
+Pokemon = SPEAROW,16
+Pokemon = SENTRET,16
+#-------------------------------
+[CAMPER,Jeff,1]
+LoseText = You beat me again!
+Pokemon = FEAROW,29
+Pokemon = FURRET,29
+#-------------------------------
+[PICNICKER,Susie]
+LoseText = Defeated! Oh my!
+Pokemon = MEOWTH,18
+#-------------------------------
+[PICNICKER,Susie,1]
+LoseText = Defeated! Oh my!
+Pokemon = PERSIAN,32
+#-------------------------------
+[HIKER,Ford]
+LoseText = You're too good for me!
+Pokemon = MACHOP,19
+#-------------------------------
+[FISHERMAN,Andrew]
+LoseText = Washed out!
+Pokemon = MAGIKARP,14
+Pokemon = MAGIKARP,18
+#-------------------------------
+[BEAUTY,Bridget]
+LoseText = My Skitty!
+Pokemon = SKITTY,18
+#-------------------------------
+[LASS,Crissy]
+LoseText = You didn't have to win so convincingly!
+Pokemon = PLUSLE,17
+Pokemon = MINUN,17
+#-------------------------------
+[COOLCOUPLE,Alice & Bob]
+LoseText = Our teamwork failed!
+Pokemon = TURTWIG,19
+Pokemon = CHIMCHAR,19
+#-------------------------------
+[POKEMONTRAINER_May,May]
+LoseText = ...
+Pokemon = COMBUSKEN,19
+#-------------------------------
+[SWIMMER2_F,Ariel]
+LoseText = Washed out!
+Pokemon = STARYU,15
+Pokemon = GOLDEEN,11
+#-------------------------------
+[RIVAL1,Blue]
+LoseText = What?! I lost to you?
+Pokemon = BULBASAUR,5
+#-------------------------------
+[RIVAL1,Blue,1]
+LoseText = What?! I lost to you?
+Pokemon = CHARMANDER,5
+#-------------------------------
+[RIVAL1,Blue,2]
+LoseText = What?! I lost to you?
+Pokemon = SQUIRTLE,5
+#-------------------------------
+[CHAMPION,Blue]
+LoseText = A good battle indeed!
+Pokemon = VENUSAUR,63
+    Item = SITRUSBERRY
+Pokemon = CHARIZARD,63
+    Item = SITRUSBERRY
+Pokemon = BLASTOISE,63
+    Item = SITRUSBERRY
+#---------------------------------------------------------------
+[ROMANSOLDIER,Gaius]
+LoseText = Bested by a provincial? Do not speak of this.
+Pokemon = MANKEY,9
+Pokemon = SANDSHREW,9
+#---------------------------------------------------------------
+[SHEPHERD,Ezra]
+LoseText = You win. Mind the goats.
+Pokemon = RATTATA,4
+Pokemon = PIDGEY,4
+#-------------------------------
+[BAKER,Jacob]
+LoseText = Well fought. Come back for bread.
+Pokemon = CATERPIE,5
+Pokemon = ODDISH,5
+#-------------------------------
+[TENTMAKER,Zadok]
+LoseText = My team came apart at the seams.
+Pokemon = RATTATA,5
+Pokemon = PIDGEY,6
+#-------------------------------
+[FISHERMAN,Reuben]
+LoseText = Not even a nibble.
+Pokemon = MAGIKARP,4
+Pokemon = GOLDEEN,6
+#-------------------------------
+[LITTLEGIRL1,Dinah]
+LoseText = I lost! Again, again!
+Pokemon = CATERPIE,6
+#-------------------------------
+[LITTLEGIRL2,Tamar]
+LoseText = You're too strong for me.
+Pokemon = PIDGEY,6
+#-------------------------------
+[WEAVER,Leah]
+LoseText = My thread snapped.
+Pokemon = CATERPIE,7
+Pokemon = WEEDLE,7
+#-------------------------------
+[ELDER_F,Naomi]
+LoseText = Well done. I'm too old to mind.
+Pokemon = PIDGEY,8
+Pokemon = BELLSPROUT,9
+#-------------------------------
+[SPICETRADER,Ruth]
+LoseText = A fair fight. Take a little spice.
+Pokemon = ODDISH,8
+Pokemon = BELLSPROUT,9
+#-------------------------------
+[ROMANSOLDIER,Marcus]
+LoseText = Hm. You fight better than you look.
+Pokemon = SPEAROW,6
+Pokemon = RATTATA,6
+#-------------------------------
+[ROMANSOLDIER,Lucius]
+LoseText = Not bad. Don't tell the others.
+Pokemon = MANKEY,7
+Pokemon = RATTATA,6
+
