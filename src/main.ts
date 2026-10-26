@@ -176,6 +176,14 @@ async function cachedDownload(
         log(`${name}: saved a copy`);
       } catch (e) {
         log(`${name}: could not keep a copy (${e})`);
+        let room = "";
+        try {
+          const est = await navigator.storage.estimate();
+          room = ` (space allowed: ${Math.round((est.quota ?? 0) / 1048576)} MB, used: ${Math.round((est.usage ?? 0) / 1048576)} MB)`;
+        } catch {
+          /* ignore */
+        }
+        setStatus(`Note: this Chromebook wouldn't keep a copy of the game, so it will download again next time. ${(e as Error).name}${room}`);
       }
     })();
   }
@@ -213,6 +221,7 @@ async function prepare(): Promise<Prepared> {
     if (quiet > 15) setStatus(`Waiting for the network… nothing new for ${Math.round(quiet)} seconds.`);
   }, 1000);
   setStatus("Checking for updates…");
+  void navigator.storage?.persist?.().catch(() => false);
   const versions = await fileVersions();
   lastProgress = performance.now();
   let files: [Uint8Array<ArrayBuffer>, Uint8Array<ArrayBuffer>];
