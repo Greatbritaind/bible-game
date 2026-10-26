@@ -36,8 +36,11 @@ export class GameFiles {
   private stems = new Map<string, string[]>();
   readonly root: Directory;
 
-  constructor(archive: ArrayBuffer | SharedArrayBuffer) {
-    const entries = readZip(archive);
+  /** `parts` lists [offset, length] of each bundle (ZIP) stored back to back in `archive`. */
+  constructor(archive: ArrayBuffer | SharedArrayBuffer, parts: [number, number][] = [[0, archive.byteLength]]) {
+    // later bundles win if two contain the same file
+    const entries = new Map<string, Uint8Array>();
+    for (const [offset, length] of parts) for (const [k, v] of readZip(archive, offset, length)) entries.set(k, v);
     const rootMap = new CIMap();
     this.root = new Directory(rootMap);
     for (const [path, data] of entries) {
@@ -93,12 +96,12 @@ export const normalize = (path: string) =>
   path.replace(/\\/g, "/").replace(/^\.\//, "").replace(/\/+/g, "/");
 
 /** Minimal ZIP reader for archives whose files are stored without compression. */
-function readZip(buffer: ArrayBuffer | SharedArrayBuffer): Map<string, Uint8Array> {
-  const view = new DataView(buffer);
-  const bytes = new Uint8Array(buffer);
+function readZip(buffer: ArrayBuffer | SharedArrayBuffer, base: number, length: number): Map<string, Uint8Array> {
+  const view = new DataView(buffer, base, length);
+  const bytes = new Uint8Array(buffer, base, length);
   // Find the end-of-central-directory record
   let eocd = -1;
-  for (let i = buffer.byteLength - 22; i >= Math.max(0, buffer.byteLength - 65557); i--) {
+  for (let i = length - 22; i >= Math.max(0, length - 65557); i--) {
     if (view.getUint32(i, true) === 0x06054b50) {
       eocd = i;
       break;

@@ -104,13 +104,29 @@ async function download(url: string, onProgress: (got: number, total: number) =>
   return readBody(res, onProgress);
 }
 
-// Keeps a copy of the big files in the browser so each visit doesn't download ~120 MB again.
-// versions.json (written by the build) changes only when a file's contents change.
-const FILE_CACHE = "game-files-v1";
-/** Where each big file is coming from right now, for the status line. */
-const fileSource: Record<string, "saved" | "web"> = {};
+// ---------------------------------------------------------------- bundles
+// The build (scripts/pack.mjs) splits the game into bundles named after a fingerprint of their contents,
+// listed in manifest.json. The browser keeps every bundle it downloads, so after an update it only
+// downloads the bundles that changed. Bundles download a few at a time; a stalled one is retried.
+const FILE_CACHE = "game-files-v2";
+const OLD_CACHES = ["game-files-v1"];
 
-async function fileVersions(): Promise<Record<string, string>> {
+interface BundleInfo {
+  name: string;
+  file: string;
+  /** unpacked size */
+  size: number;
+  /** download size (differs from size when gzipped) */
+  bytes?: number;
+  gz?: boolean;
+}
+interface Manifest {
+  bundles: BundleInfo[];
+  ruby: BundleInfo;
+}
+
+async function loadManifest(): Promise<Manifest | null> {
+  for (const name of OLD_CACHES) void caches?.delete(name).catch(() => {});
   if (new URLSearchParams(location.search).has("fresh")) {
     // ?fresh throws away the saved copy (in case it ever gets stuck)
     try {
@@ -118,17 +134,20 @@ async function fileVersions(): Promise<Record<string, string>> {
     } catch {
       /* ignore */
     }
-    return {};
   }
-  try {
-    const ctl = new AbortController();
-    const timer = setTimeout(() => ctl.abort(), 8000);
-    const res = await fetch("versions.json", { cache: "no-store", signal: ctl.signal });
-    clearTimeout(timer);
-    return res.ok ? await res.json() : {};
-  } catch {
-    return {};
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const ctl = new AbortController();
+      const timer = setTimeout(() => ctl.abort(), 10000);
+      const res = await fetch("manifest.json", { cache: "no-store", signal: ctl.signal });
+      clearTimeout(timer);
+      if (res.status === 404) return null; // local test build without bundles
+      if (res.ok) return await res.json();
+    } catch {
+      /* retry */
+    }
   }
+  throw new Error("Couldn't reach the game's website. Check the internet connection and reload.");
 }
 
 /** Promise that rejects after `ms` (so a stuck browser storage call can't freeze the start screen). */
@@ -140,54 +159,96 @@ function within<T>(p: Promise<T>, ms: number): Promise<T> {
   ]).finally(() => clearTimeout(timer));
 }
 
-async function cachedDownload(
-  name: string,
-  version: string | undefined,
-  onProgress: (got: number, total: number) => void,
-): Promise<Uint8Array<ArrayBuffer>> {
-  if (!version || typeof caches === "undefined") return download(name, onProgress);
-  const key = new URL(`${name}?v=${version}`, location.href).href;
-  let cache: Cache | null = null;
+async function gunzip(data: Uint8Array<ArrayBuffer>): Promise<Uint8Array<ArrayBuffer>> {
+  if (data[0] !== 0x1f || data[1] !== 0x8b) return data; // already unpacked (e.g. by a proxy)
+  const stream = new Response(data).body!.pipeThrough(new DecompressionStream("gzip"));
+  return new Uint8Array(await new Response(stream).arrayBuffer());
+}
+
+let cacheWarned = false;
+async function warnNoCache(e: unknown) {
+  if (cacheWarned) return;
+  cacheWarned = true;
+  log(`could not keep a copy (${e})`);
+  let room = "";
   try {
-    cache = await within(caches.open(FILE_CACHE), 8000);
-    const hit = await within(cache.match(key), 8000);
-    if (hit) {
-      fileSource[name] = "saved";
-      const bytes = await readBody(hit, onProgress, 10000);
-      log(`${name}: using saved copy`);
-      return bytes;
-    }
-  } catch (e) {
-    // the saved copy is unreadable: throw it away and download instead
-    log(`${name}: saved copy not usable (${e}), downloading`);
-    fileSource[name] = "web";
-    cache = null;
-    void caches.delete(FILE_CACHE).catch(() => {});
+    const est = await navigator.storage.estimate();
+    room = ` (space allowed: ${Math.round((est.quota ?? 0) / 1048576)} MB, used: ${Math.round((est.usage ?? 0) / 1048576)} MB)`;
+  } catch {
+    /* ignore */
   }
-  fileSource[name] = "web";
-  const bytes = await download(key, onProgress);
+  setStatus(`Note: this browser wouldn't keep a copy of the game, so it will download again next time. ${(e as Error)?.name ?? e}${room}`);
+}
+
+/** Gets one bundle (from the saved copy or the web) and returns it unpacked. */
+async function fetchBundle(
+  info: BundleInfo,
+  cache: Cache | null,
+  onProgress: (got: number) => void,
+  onSource: (s: "saved" | "web") => void,
+): Promise<Uint8Array<ArrayBuffer>> {
+  const url = new URL(info.file, location.href).href;
+  let raw: Uint8Array<ArrayBuffer> | null = null;
   if (cache) {
-    const c = cache;
-    // save in the background; the game doesn't wait for it
-    void (async () => {
-      try {
-        for (const req of await c.keys()) if (new URL(req.url).pathname.endsWith(`/${name}`)) await c.delete(req);
-        await c.put(key, new Response(bytes, { headers: { "content-type": "application/octet-stream", "content-length": String(bytes.length) } }));
-        log(`${name}: saved a copy`);
-      } catch (e) {
-        log(`${name}: could not keep a copy (${e})`);
-        let room = "";
-        try {
-          const est = await navigator.storage.estimate();
-          room = ` (space allowed: ${Math.round((est.quota ?? 0) / 1048576)} MB, used: ${Math.round((est.usage ?? 0) / 1048576)} MB)`;
-        } catch {
-          /* ignore */
-        }
-        setStatus(`Note: this browser wouldn't keep a copy of the game, so it will download again next time. ${(e as Error).name}${room}`);
+    try {
+      const hit = await within(cache.match(url), 8000);
+      if (hit) {
+        onSource("saved");
+        raw = await readBody(hit, (g) => onProgress(g), 10000);
       }
-    })();
+    } catch (e) {
+      log(`${info.name}: saved copy not usable (${e})`);
+      raw = null;
+      void cache.delete(url).catch(() => {});
+    }
   }
-  return bytes;
+  if (!raw) {
+    onSource("web");
+    for (let attempt = 1; ; attempt++) {
+      const ctl = new AbortController();
+      try {
+        const res = await fetch(url, { signal: ctl.signal });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        raw = await readBody(res, (g) => onProgress(g), 20000);
+        break;
+      } catch (e) {
+        ctl.abort();
+        onProgress(0);
+        log(`${info.name}: download try ${attempt} failed (${e})`);
+        if (attempt >= 6) throw new Error(`Couldn't download part of the game (${info.name}). Check the internet connection and reload.`);
+        await new Promise((r) => setTimeout(r, 1000 * attempt));
+      }
+    }
+    if (cache) {
+      const data = raw;
+      void cache.put(url, new Response(data, { headers: { "content-type": "application/octet-stream" } })).catch(warnNoCache);
+    }
+  }
+  const out = info.gz ? await gunzip(raw) : raw;
+  if (out.length !== info.size) {
+    void cache?.delete(url).catch(() => {});
+    throw new Error(`Part of the game (${info.name}) didn't download correctly. Reload to try again.`);
+  }
+  return out;
+}
+
+/** Runs `jobs` with at most `limit` at a time. */
+async function pool(jobs: (() => Promise<void>)[], limit: number) {
+  let next = 0;
+  await Promise.all(
+    Array.from({ length: Math.min(limit, jobs.length) }, async () => {
+      while (next < jobs.length) await jobs[next++]();
+    }),
+  );
+}
+
+/** Throws away saved bundles the current game no longer uses. */
+async function pruneCache(cache: Cache, keep: Set<string>) {
+  try {
+    for (const req of await cache.keys()) if (!keep.has(req.url)) await cache.delete(req);
+  } catch {
+    /* ignore */
+  }
 }
 
 interface Prepared {
@@ -198,48 +259,95 @@ interface Prepared {
   title: string;
 }
 
-async function prepare(): Promise<Prepared> {
-  if (!crossOriginIsolated) {
-    // coi-serviceworker reloads the page once to turn this on; if it is still off, the browser can't run the game
-    throw new Error("This browser can't run the game here. Try Chrome, and don't use a private or guest window.");
-  }
-  const progress = { game: [0, 0], ruby: [0, 0] };
-  const update = () => {
-    const got = progress.game[0] + progress.ruby[0];
-    const total = progress.game[1] + progress.ruby[1];
-    const f = total ? Math.min(1, got / total) : 0;
-    $("bar-fill").style.width = `${Math.round(f * 100)}%`;
-    $("play-label").textContent = `Getting ready… ${Math.round(f * 100)}%`;
-    const mb = (n: number) => Math.round(n / 1048576);
-    const web = Object.values(fileSource).includes("web");
-    lastProgress = performance.now();
-    if (total) setStatus(`${web ? "Downloading" : "Loading from this computer:"} ${mb(got)} of ${mb(total)} MB`);
-  };
+/** Downloads (or loads from the saved copy) everything the game needs. */
+async function getGameFiles() {
   let lastProgress = performance.now();
   const watch = window.setInterval(() => {
     const quiet = (performance.now() - lastProgress) / 1000;
     if (quiet > 15) setStatus(`Waiting for the network… nothing new for ${Math.round(quiet)} seconds.`);
   }, 1000);
-  setStatus("Checking for updates…");
-  void navigator.storage?.persist?.().catch(() => false);
-  const versions = await fileVersions();
-  lastProgress = performance.now();
-  let files: [Uint8Array<ArrayBuffer>, Uint8Array<ArrayBuffer>];
   try {
-    files = await Promise.all([
-      cachedDownload("game.mkxpz", versions["game.mkxpz"], (g, t) => ((progress.game = [g, t]), update())),
-      cachedDownload("ruby.wasm", versions["ruby.wasm"], (g, t) => ((progress.ruby = [g, t]), update())),
-    ]);
+    setStatus("Checking for updates…");
+    void navigator.storage?.persist?.().catch(() => false);
+    const manifest = await loadManifest();
+    lastProgress = performance.now();
+    if (!manifest) {
+      // local test build: one game file, nothing kept
+      const progress = { game: [0, 0], ruby: [0, 0] };
+      const update = () => {
+        lastProgress = performance.now();
+        const f = Math.min(1, (progress.game[0] + progress.ruby[0]) / (progress.game[1] + progress.ruby[1] || 1));
+        $("bar-fill").style.width = `${Math.round(f * 100)}%`;
+        $("play-label").textContent = `Getting ready… ${Math.round(f * 100)}%`;
+      };
+      const [archive, rubyBytes] = await Promise.all([
+        download("game.mkxpz", (g, t) => ((progress.game = [g, t]), update())),
+        download("ruby.wasm", (g, t) => ((progress.ruby = [g, t]), update())),
+      ]);
+      setStatus("Starting up…");
+      const shared = createShared(archive.byteLength);
+      new Uint8Array(shared.archive).set(archive);
+      return [shared, await WebAssembly.compile(rubyBytes)] as const;
+    }
+
+    // Place the bundles back to back in one shared buffer
+    const parts: [number, number][] = [];
+    let offset = 0;
+    for (const b of manifest.bundles) {
+      parts.push([offset, b.size]);
+      offset += b.size;
+    }
+    const shared = createShared(offset, parts);
+    const archive = new Uint8Array(shared.archive);
+
+    const all = [manifest.ruby, ...manifest.bundles];
+    const total = all.reduce((n, b) => n + (b.bytes ?? b.size), 0);
+    const got = new Map<string, number>();
+    let downloading = false;
+    const mb = (n: number) => Math.round(n / 1048576);
+    const update = () => {
+      lastProgress = performance.now();
+      const done = [...got.values()].reduce((a, b) => a + b, 0);
+      const f = Math.min(1, done / total);
+      $("bar-fill").style.width = `${Math.round(f * 100)}%`;
+      $("play-label").textContent = `Getting ready… ${Math.round(f * 100)}%`;
+      setStatus(`${downloading ? "Downloading" : "Loading from this computer:"} ${mb(done)} of ${mb(total)} MB`);
+    };
+    let cache: Cache | null = null;
+    try {
+      cache = typeof caches === "undefined" ? null : await within(caches.open(FILE_CACHE), 8000);
+    } catch (e) {
+      void warnNoCache(e);
+    }
+
+    let rubyBytes: Uint8Array<ArrayBuffer> | null = null;
+    const jobs = all.map((info, i) => async () => {
+      const data = await fetchBundle(
+        info,
+        cache,
+        (g) => (got.set(info.file, g), update()),
+        (src) => (downloading ||= src === "web"),
+      );
+      if (i === 0) rubyBytes = data;
+      else archive.set(data, parts[i - 1][0]);
+    });
+    await pool(jobs, 4);
+    if (cache) void pruneCache(cache, new Set(all.map((b) => new URL(b.file, location.href).href)));
+    log(downloading ? "downloaded" : "loaded from saved copy");
+    setStatus("Starting up…");
+    return [shared, await WebAssembly.compile(rubyBytes!)] as const;
   } finally {
     window.clearInterval(watch);
   }
-  const [archive, rubyBytes] = files;
-  log("downloaded");
-  setStatus("Starting up…");
-  const rubyModule = await WebAssembly.compile(rubyBytes);
-  const shared = createShared(archive.byteLength);
-  new Uint8Array(shared.archive).set(archive);
-  const game = new GameFiles(shared.archive);
+}
+
+async function prepare(): Promise<Prepared> {
+  if (!crossOriginIsolated) {
+    // coi-serviceworker reloads the page once to turn this on; if it is still off, the browser can't run the game
+    throw new Error("This browser can't run the game here. Try Chrome, and don't use a private or guest window.");
+  }
+  const [shared, rubyModule] = await getGameFiles();
+  const game = new GameFiles(shared.archive, shared.archiveParts);
   const config = readMkxpConfig(game);
   const ini = readGameIni(game);
   const title = String(config.windowTitle ?? ini.Title ?? "Game");

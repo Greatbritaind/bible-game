@@ -2,3 +2,5 @@ node_modules
 dist
 public/game.mkxpz
 public/ruby.wasm
+public/files
+public/manifest.json

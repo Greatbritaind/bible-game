@@ -35,21 +35,16 @@ jobs:
 
       - name: Pack the game
         run: |
-          pip3 install rpzip
           cd game
           # Windows-only and editor files aren't needed in the browser
           rm -rf PBS ./*.exe ./*.dll ./*.html ./*.txt ./*.URL ./*.bmp ./*.nc Game.rxproj
-          # Always use the same game name: saves are stored under it
+          # Always use the same game name
           sed -i -E 's/^(\s*)("windowTitle":\s*)"[^"]*"/\1\2"Road to Jerusalem"/' mkxp.json
           grep '"windowTitle"' mkxp.json
-          # Files are stored uncompressed so the player can read them without unpacking
-          rpzip -r ../public/game.mkxpz ./*
-          # Content fingerprints: players' browsers re-download a file only when it really changed
-          GAME_V=$(find . -type f -print0 | sort -z | xargs -0 sha256sum | sha256sum | cut -c1-16)
-          RUBY_V=$(sha256sum ../public/ruby.wasm | cut -c1-16)
-          echo "{\"game.mkxpz\": \"$GAME_V\", \"ruby.wasm\": \"$RUBY_V\"}" > ../public/versions.json
-          cat ../public/versions.json
-          ls -lh ../public
+          cd ..
+          # Split into bundles named after their contents, so players only download what changed
+          node scripts/pack.mjs game public
+          rm public/ruby.wasm
 
       - name: Build the page
         run: npm run build

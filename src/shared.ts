@@ -32,9 +32,11 @@ export interface SharedBuffers {
   audioPos: SharedArrayBuffer; // Float64 [bgm, bgs]
   archive: SharedArrayBuffer;
   screen: SharedArrayBuffer; // two RGBA frame buffers, filled by the game thread
+  /** [offset, length] of each game bundle inside `archive` */
+  archiveParts: [number, number][];
 }
 
-export function createShared(archiveBytes: number): SharedBuffers {
+export function createShared(archiveBytes: number, archiveParts: [number, number][] = [[0, archiveBytes]]): SharedBuffers {
   return {
     control: new SharedArrayBuffer(CTL.SIZE * 4),
     keys: new SharedArrayBuffer(KEYS_CAPACITY * 2),
@@ -43,6 +45,7 @@ export function createShared(archiveBytes: number): SharedBuffers {
     audioPos: new SharedArrayBuffer(16),
     archive: new SharedArrayBuffer(archiveBytes),
     screen: new SharedArrayBuffer(SCREEN_MAX_PIXELS * 4 * 2),
+    archiveParts,
   };
 }
 

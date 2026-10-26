@@ -29,7 +29,7 @@ self.onmessage = async (ev: MessageEvent<StartMessage>) => {
 
 async function run(start: StartMessage) {
   (self as unknown as { __debug: boolean }).__debug = start.debug;
-  const game = new GameFiles(start.shared.archive);
+  const game = new GameFiles(start.shared.archive, start.shared.archiveParts);
   const engine = new Engine(game, start.shared, post);
   await engine.loadFonts();
 
