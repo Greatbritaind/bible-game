@@ -11,6 +11,8 @@
   </head>
   <body>
     <canvas id="screen" tabindex="0" aria-label="Game screen"></canvas>
+    <!-- Old-TV look (scanlines and dark edges), drawn on top of the game when turned on -->
+    <div id="crt" aria-hidden="true" hidden></div>
 
     <main id="start" class="screen">
       <img class="scene" src="title-bg.webp" alt="" aria-hidden="true" />
@@ -48,6 +50,7 @@
 
     <nav id="hud" hidden>
       <button id="hud-read" class="hud-btn" title="Read aloud: off" aria-label="Read aloud" aria-pressed="false">🔈</button>
+      <button id="hud-crt" class="hud-btn" title="Old TV look: off" aria-label="Old TV look" aria-pressed="false">📺</button>
       <button id="hud-keys" class="hud-btn" title="Keys" aria-label="Show keys">⌨</button>
       <button id="hud-save" class="hud-btn" title="Download my save" aria-label="Download my save">⬇</button>
       <button id="hud-full" class="hud-btn" title="Full screen" aria-label="Full screen">⛶</button>

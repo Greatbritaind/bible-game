@@ -176,6 +176,39 @@ const readAloud = (() => {
   };
 })();
 
+// ---------------------------------------------------------------- old TV look
+// Scanlines and dark edges drawn over the game with CSS (see #crt in style.css). Off by default;
+// the choice is remembered on this computer.
+function setupCrt() {
+  const KEY = "crt";
+  let on = false;
+  try {
+    on = localStorage.getItem(KEY) === "on";
+  } catch {
+    /* storage blocked: starts off */
+  }
+  const b = $("hud-crt");
+  const show = () => {
+    $("crt").hidden = !on;
+    document.body.classList.toggle("crt-on", on);
+    b.classList.toggle("on", on);
+    b.title = on ? "Old TV look: on" : "Old TV look: off";
+    b.setAttribute("aria-pressed", String(on));
+  };
+  show();
+  b.onclick = () => {
+    on = !on;
+    try {
+      localStorage.setItem(KEY, on ? "on" : "off");
+    } catch {
+      /* ignore */
+    }
+    show();
+    toast(on ? "Old TV look is on" : "Old TV look is off");
+    $("screen").focus();
+  };
+}
+
 // ---------------------------------------------------------------- bundles
 // The build (scripts/pack.mjs) splits the game into bundles named after a fingerprint of their contents,
 // listed in manifest.json. The browser keeps every bundle it downloads, so after an update it only
@@ -516,6 +549,9 @@ function runGame(p: Prepared, existingSaves: [string, Uint8Array][]) {
     frameImage = new ImageData(w, h);
     document.documentElement.style.setProperty("--aspect-w", String(w));
     document.documentElement.style.setProperty("--aspect-h", String(h));
+    // the game's art uses 2x2 screen pixels per art pixel: one scanline per art pixel row
+    document.documentElement.style.setProperty("--crt-rows", String(Math.round(h / 2)));
+    document.documentElement.style.setProperty("--crt-cols", String(Math.round(w / 2)));
   };
   setSize(screenW, screenH);
   canvas.focus();
@@ -631,6 +667,7 @@ function runGame(p: Prepared, existingSaves: [string, Uint8Array][]) {
   });
   $("keys-pop").onclick = () => ($("keys-pop").hidden = true);
   readAloud.setup();
+  setupCrt();
 
   // ---- image decoding for the game thread (native decoders live on the page)
   const decodeCanvas = new OffscreenCanvas(1, 1);
