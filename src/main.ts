@@ -183,7 +183,7 @@ async function cachedDownload(
         } catch {
           /* ignore */
         }
-        setStatus(`Note: this Chromebook wouldn't keep a copy of the game, so it will download again next time. ${(e as Error).name}${room}`);
+        setStatus(`Note: this browser wouldn't keep a copy of the game, so it will download again next time. ${(e as Error).name}${room}`);
       }
     })();
   }
