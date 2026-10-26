@@ -21,7 +21,8 @@ export const CTL = {
 
 export const KEYS_CAPACITY = 512; // UTF-16 code units for the comma-separated list of held keys
 export const TEXT_CAPACITY = 1024;
-export const DECODE_CAPACITY = 96 * 1024 * 1024; // largest image the game can load (RGBA bytes)
+export const DECODE_CAPACITY = 48 * 1024 * 1024; // largest image the game can load (RGBA bytes)
+export const SCREEN_MAX_PIXELS = 1024 * 768; // largest game screen; two frame buffers of this size
 
 export interface SharedBuffers {
   control: SharedArrayBuffer;
@@ -30,6 +31,7 @@ export interface SharedBuffers {
   decode: SharedArrayBuffer;
   audioPos: SharedArrayBuffer; // Float64 [bgm, bgs]
   archive: SharedArrayBuffer;
+  screen: SharedArrayBuffer; // two RGBA frame buffers, filled by the game thread
 }
 
 export function createShared(archiveBytes: number): SharedBuffers {
@@ -40,12 +42,13 @@ export function createShared(archiveBytes: number): SharedBuffers {
     decode: new SharedArrayBuffer(DECODE_CAPACITY),
     audioPos: new SharedArrayBuffer(16),
     archive: new SharedArrayBuffer(archiveBytes),
+    screen: new SharedArrayBuffer(SCREEN_MAX_PIXELS * 4 * 2),
   };
 }
 
 /** Messages the game thread sends to the page. */
 export type ToPage =
-  | { type: "frame"; image: ImageBitmap }
+  | { type: "frame"; buffer: number; width: number; height: number }
   | { type: "decode"; path: string }
   | { type: "msgbox"; text: string }
   | { type: "audio"; op: "play" | "stop" | "fade"; ch: string; name?: string; vol?: number; pitch?: number; pos?: number; ms?: number }
@@ -66,4 +69,6 @@ export interface StartMessage {
   screen: [number, number];
   title: string;
   debug: boolean;
+  /** Test-only: Ruby code to run once the player is on a map (from ?cmd= with ?debug). */
+  debugCommand?: string;
 }

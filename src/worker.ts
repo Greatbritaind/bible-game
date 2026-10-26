@@ -97,7 +97,7 @@ async function run(start: StartMessage) {
 
   const { vm } = await RubyVM.instantiateModule({ module: start.rubyModule, wasip1: wasi });
   post({ type: "ready" });
-  vm.eval(`$__game_title = ${JSON.stringify(start.title)}; $__debug = ${start.debug}`);
+  vm.eval(`$__game_title = ${JSON.stringify(start.title)}; $__debug = ${start.debug}; $__debug_cmd = ${JSON.stringify(start.debugCommand ?? "")}`);
   const [w, h] = start.screen;
   // Synchronous: the game runs until it quits. Graphics.update sleeps between frames.
   vm.eval(rgssSource + `\nGraphics.resize_screen(${w}, ${h})\n` + bootSource);

@@ -5,7 +5,7 @@ import "@fontsource/atkinson-hyperlegible/700.css";
 import "./style.css";
 import { GameFiles } from "./gamefs";
 import { AudioSystem } from "./audio";
-import { CTL, DECODE_CAPACITY, KEYS_CAPACITY, TEXT_CAPACITY, createShared, type SharedBuffers, type StartMessage, type ToPage } from "./shared";
+import { CTL, DECODE_CAPACITY, KEYS_CAPACITY, SCREEN_MAX_PIXELS, TEXT_CAPACITY, createShared, type SharedBuffers, type StartMessage, type ToPage } from "./shared";
 import * as saves from "./saves";
 
 const SAVE_FILE = "Game.rxdata";
@@ -201,21 +201,27 @@ function runGame(p: Prepared, existingSaves: [string, Uint8Array][]) {
 
   // ---- screen
   const canvas = $<HTMLCanvasElement>("screen");
-  const screen = canvas.getContext("bitmaprenderer")!;
+  const screen = canvas.getContext("2d")!;
+  const screenBuf = new Uint8ClampedArray(shared.screen);
+  let frameImage: ImageData | null = null;
   const setSize = (w: number, h: number) => {
-    if (canvas.width === w && canvas.height === h) return;
+    if (canvas.width === w && canvas.height === h && frameImage) return;
     canvas.width = w;
     canvas.height = h;
+    frameImage = new ImageData(w, h);
     document.documentElement.style.setProperty("--aspect-w", String(w));
     document.documentElement.style.setProperty("--aspect-h", String(h));
   };
   setSize(screenW, screenH);
   canvas.focus();
-  let pending: ImageBitmap | null = null;
+  let pending: { buffer: number; width: number; height: number } | null = null;
   const tick = () => {
     if (pending) {
-      setSize(pending.width, pending.height);
-      screen.transferFromImageBitmap(pending);
+      const { buffer, width, height } = pending;
+      setSize(width, height);
+      const start = buffer * SCREEN_MAX_PIXELS * 4;
+      frameImage!.data.set(screenBuf.subarray(start, start + width * height * 4));
+      screen.putImageData(frameImage!, 0, 0);
       pending = null;
     }
     audioPos[0] = audio.position("bgm");
@@ -358,8 +364,7 @@ function runGame(p: Prepared, existingSaves: [string, Uint8Array][]) {
     const m = ev.data;
     switch (m.type) {
       case "frame":
-        pending?.close();
-        pending = m.image;
+        pending = m;
         break;
       case "decode":
         void decode(m.path);
@@ -415,6 +420,7 @@ function runGame(p: Prepared, existingSaves: [string, Uint8Array][]) {
     screen: [screenW, screenH],
     title,
     debug: /[?&]debug/.test(location.search),
+    debugCommand: /[?&]debug/.test(location.search) ? (new URLSearchParams(location.search).get("cmd") ?? undefined) : undefined,
   };
   worker.postMessage(msg);
 }

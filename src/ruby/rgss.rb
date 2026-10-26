@@ -531,7 +531,9 @@ class Bitmap
     check
     w = RGSSRuntime.call(:text_width, str.to_s, @font.__names, @font.size.to_i, @font.bold ? 1 : 0,
                          @font.italic ? 1 : 0).to_i
-    Rect.new(0, 0, w, RGSSRuntime.call(:text_height, @font.__names, @font.size.to_i).to_i)
+    h = RGSSRuntime.call(:text_height, str.to_s, @font.__names, @font.size.to_i, @font.bold ? 1 : 0,
+                         @font.italic ? 1 : 0).to_i
+    Rect.new(0, 0, w, h)
   end
 
   # mkxp-z animation API (GIFs are shown as still images)
@@ -840,6 +842,13 @@ module Graphics
 
     def update
       Audio.__update
+      if $__debug && $__debug_cmd && !$__debug_cmd.empty? && !@__in_transition && @frame_count > 600 && defined?(Scene_Map) && $scene.is_a?(Scene_Map) &&
+         $game_temp && !$game_temp.in_menu && !$game_temp.message_window_showing && !(pbMapInterpreterRunning? rescue true)
+        cmd = $__debug_cmd
+        $__debug_cmd = nil
+        puts "[debug] running #{cmd}"
+        eval(cmd, TOPLEVEL_BINDING)
+      end
       if $__debug && @frame_count % 240 == 120
         where = caller(1, 14).map { |l| l.gsub(/Section(\d+)/) { ($RGSS_SCRIPTS[$1.to_i][1] rescue $1).to_s } }
         puts "[where] " + where.join(" <- ")
@@ -868,10 +877,12 @@ module Graphics
         return
       end
       RGSSRuntime.await(:transition_begin, filename.to_s, vague.to_i)
+      @__in_transition = true
       duration.times do |i|
         RGSSRuntime.call(:transition_progress, (i + 1).to_f / duration)
         update
       end
+      @__in_transition = false
       RGSSRuntime.call(:transition_end)
     end
 

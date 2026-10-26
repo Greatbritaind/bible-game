@@ -1,7 +1,7 @@
 // JavaScript half of the RGSS runtime: bitmaps, the screen renderer, fonts, keyboard and sound.
 // Ruby calls these through `window.RGSS` (see src/ruby/rgss.rb).
 import type { GameFiles } from "./gamefs";
-import { CTL, KEYS_CAPACITY, TEXT_CAPACITY, type SharedBuffers, type ToPage } from "./shared";
+import { CTL, KEYS_CAPACITY, SCREEN_MAX_PIXELS, TEXT_CAPACITY, type SharedBuffers, type ToPage } from "./shared";
 
 type Canvas = OffscreenCanvas;
 type Ctx = OffscreenCanvasRenderingContext2D;
@@ -110,6 +110,7 @@ export class Engine {
   private scratch2: [Canvas, Ctx];
 
   private fontFamilies = new Map<string, string>(); // lower-case name -> CSS family
+  private fontMetrics = new Map<string, { asc: number; desc: number; upm: number }>(); // CSS family -> hhea metrics
   private measure: Ctx;
   private out: [Canvas, Ctx];
   private ctl: Int32Array;
@@ -117,6 +118,8 @@ export class Engine {
   private text: Uint16Array;
   private decodeBuf: Uint8ClampedArray;
   private audioPos: Float64Array;
+  private screenBuf: Uint8ClampedArray;
+  private nextBuffer = 0;
   private lastFrame = 0;
 
   constructor(
@@ -129,6 +132,7 @@ export class Engine {
     this.text = new Uint16Array(shared.text);
     this.decodeBuf = new Uint8ClampedArray(shared.decode);
     this.audioPos = new Float64Array(shared.audioPos);
+    this.screenBuf = new Uint8ClampedArray(shared.screen);
     [this.back, this.backCtx] = newCanvasRead(this.width, this.height);
     this.out = newCanvas(this.width, this.height);
     this.scratch = newCanvasRead(64, 64);
@@ -150,23 +154,49 @@ export class Engine {
         await face.load();
         (self as unknown as { fonts: FontFaceSet }).fonts.add(face);
         for (const n of names) this.fontFamilies.set(n.toLowerCase(), css);
+        const metrics = fontVerticalMetrics(data);
+        if (metrics) this.fontMetrics.set(css, metrics);
       } catch (e) {
         console.warn("Font failed to load", path, e);
       }
     }
   }
 
-  private cssFont(names: string, size: number, bold: number, italic: number) {
-    let family = "";
+  private family(names: string) {
     for (const n of names.split("|")) {
       const f = this.fontFamilies.get(n.toLowerCase());
-      if (f) {
-        family = f;
-        break;
-      }
+      if (f) return f;
     }
-    if (!family) family = "Arial, Helvetica, sans-serif";
-    return `${italic ? "italic " : ""}${bold ? "bold " : ""}${size}px ${family}`;
+    return "";
+  }
+
+  /**
+   * Lay out text the way mkxp-z (SDL_ttf) does, so Essentials' hand-tuned text positions line up:
+   * fonts are opened at 90% of the requested size, and the text's height covers the font's
+   * nominal height plus any glyph parts that stick out above or below it.
+   */
+  private layout(str: string, names: string, size: number, bold: number, italic: number) {
+    const family = this.family(names);
+    const px = Math.max(1, Math.trunc(size * 0.9));
+    const font = `${italic ? "italic " : ""}${bold ? "bold " : ""}${px}px ${family || "Arial, Helvetica, sans-serif"}`;
+    const ctx = this.measure;
+    ctx.font = font;
+    const m = ctx.measureText(str || " ");
+    const fm = family ? this.fontMetrics.get(family) : undefined;
+    let ascent: number, nominal: number;
+    if (fm) {
+      const scale = px / fm.upm;
+      ascent = Math.ceil(fm.asc * scale);
+      nominal = Math.ceil((fm.asc - fm.desc) * scale);
+    } else {
+      ascent = Math.ceil(m.fontBoundingBoxAscent ?? px * 0.8);
+      nominal = ascent + Math.ceil(m.fontBoundingBoxDescent ?? px * 0.2);
+    }
+    const top = str ? ascent - Math.ceil(m.actualBoundingBoxAscent) : 0;
+    const bottom = str ? ascent + Math.ceil(m.actualBoundingBoxDescent) : nominal;
+    const minY = Math.min(0, top);
+    const maxY = Math.max(nominal, bottom);
+    return { font, width: Math.ceil(m.width), height: maxY - minY, baseline: ascent - minY };
   }
 
   // ---------------------------------------------------------------- API for Ruby
@@ -301,11 +331,10 @@ export class Engine {
         outColor: string,
         shadow: number,
       ) => this.drawText(id, x, y, w, h, str, align, names, size, bold, italic, color, outline, outColor, shadow),
-      text_width: (str: string, names: string, size: number, bold: number, italic: number) => {
-        this.measure.font = this.cssFont(names, size, bold, italic);
-        return Math.ceil(this.measure.measureText(str).width);
-      },
-      text_height: (names: string, size: number) => this.textHeight(names, size),
+      text_width: (str: string, names: string, size: number, bold: number, italic: number) =>
+        this.layout(str, names, size, bold, italic).width,
+      text_height: (str: string, names: string, size: number, bold: number, italic: number) =>
+        this.layout(str, names, size, bold, italic).height,
       font_exists: (name: string) => (this.fontFamilies.has(name.toLowerCase()) ? 1 : 0),
 
       frame: (sync: string) => this.frame(sync),
@@ -371,6 +400,12 @@ export class Engine {
   }
 
   // ---------------------------------------------------------------- bitmaps
+  private bitmapBytes() {
+    let n = 0;
+    for (const b of this.bitmaps.values()) n += b.w * b.h * 4;
+    return n;
+  }
+
   private bmpNew(w: number, h: number) {
     const [canvas, ctx] = newCanvas(w, h);
     const id = this.nextBitmap++;
@@ -401,7 +436,7 @@ export class Engine {
     // Keep decoded images so repeated loads are instant (graphics are reused a lot)
     this.imageCache.set(key, img);
     this.cacheBytes += img ? img.width * img.height * 4 : 0;
-    while (this.cacheBytes > 192 * 1024 * 1024 && this.imageCache.size > 1) {
+    while (this.cacheBytes > 96 * 1024 * 1024 && this.imageCache.size > 1) {
       const first = this.imageCache.keys().next().value!;
       const c = this.imageCache.get(first);
       this.cacheBytes -= c ? c.width * c.height * 4 : 0;
@@ -429,13 +464,6 @@ export class Engine {
     return this.scratch;
   }
 
-  private textHeight(names: string, size: number) {
-    this.measure.font = this.cssFont(names, size, 0, 0);
-    const m = this.measure.measureText("Ag");
-    const h = Math.ceil((m.fontBoundingBoxAscent ?? size * 0.8) + (m.fontBoundingBoxDescent ?? size * 0.2));
-    return h > 0 ? h : size;
-  }
-
   private drawText(
     id: number,
     x: number,
@@ -456,23 +484,20 @@ export class Engine {
     const bm = this.bitmaps.get(id);
     if (!bm) return;
     const ctx = bm.ctx;
-    ctx.font = this.cssFont(names, size, bold, italic);
+    const t = this.layout(str, names, size, bold, italic);
+    ctx.font = t.font;
     ctx.textBaseline = "alphabetic";
-    const m = ctx.measureText(str);
-    const ascent = m.fontBoundingBoxAscent ?? size * 0.8;
-    const descent = m.fontBoundingBoxDescent ?? size * 0.2;
-    const th = ascent + descent;
-    let width = m.width;
-    // RGSS squeezes text that is too wide for the rectangle
+    let width = t.width;
+    // Text too wide for the rectangle is squeezed, like RPG Maker does
     let squeeze = 1;
     if (width > w && w > 0) {
-      squeeze = Math.max(0.6, w / width);
+      squeeze = w / width;
       width = w;
     }
     let tx = x;
-    if (align === 1) tx = x + (w - width) / 2;
+    if (align === 1) tx = x + Math.trunc((w - width) / 2);
     else if (align === 2) tx = x + w - width;
-    const ty = y + (h - th) / 2 + ascent;
+    const ty = y + Math.trunc((h - t.height) / 2) + t.baseline;
     ctx.save();
     ctx.translate(Math.round(tx), Math.round(ty));
     ctx.scale(squeeze, 1);
@@ -632,8 +657,9 @@ export class Engine {
   private renderTime = 0;
   private frame(sync: string) {
     if ((self as unknown as { __debug?: boolean }).__debug && ++this.debugFrames % 120 === 0) {
-      console.log(`[perf] average draw time ${(this.renderTime / 120).toFixed(2)} ms/frame`);
+      console.log(`[perf] average draw time ${(this.renderTime / 120).toFixed(2)} ms/frame, ${this.bitmaps.size} bitmaps (${Math.round(this.bitmapBytes() / 1048576)} MB), image cache ${Math.round(this.cacheBytes / 1048576)} MB`);
       if (this.debugFrames % 600 === 0) this.dumpScene();
+
       this.renderTime = 0;
     }
     const t = performance.now();
@@ -641,8 +667,15 @@ export class Engine {
     this.render();
     this.present();
     this.renderTime += performance.now() - t;
-    const image = this.out[0].transferToImageBitmap();
-    this.post({ type: "frame", image }, [image]);
+    // Copy the finished frame into shared memory (no new objects per frame, so memory stays flat)
+    const w = this.width,
+      h = this.height;
+    if (w * h <= SCREEN_MAX_PIXELS) {
+      const buffer = this.nextBuffer;
+      this.nextBuffer ^= 1;
+      this.screenBuf.set(this.out[1].getImageData(0, 0, w, h).data, buffer * SCREEN_MAX_PIXELS * 4);
+      this.post({ type: "frame", buffer, width: w, height: h });
+    }
     this.waitFrame();
   }
 
@@ -909,6 +942,30 @@ function applyToneColor(d: Uint8ClampedArray, tone: number[], color: number[], a
     d[i] = r;
     d[i + 1] = gg;
     d[i + 2] = b;
+  }
+}
+
+/** Ascender, descender and units per em, the way FreeType reads them (from the "hhea" table). */
+function fontVerticalMetrics(data: Uint8Array): { asc: number; desc: number; upm: number } | null {
+  try {
+    const v = new DataView(data.buffer, data.byteOffset, data.byteLength);
+    const numTables = v.getUint16(4);
+    let upm = 0,
+      asc = 0,
+      desc = 0;
+    for (let i = 0; i < numTables; i++) {
+      const rec = 12 + i * 16;
+      const tag = String.fromCharCode(data[rec], data[rec + 1], data[rec + 2], data[rec + 3]);
+      const off = v.getUint32(rec + 8);
+      if (tag === "head") upm = v.getUint16(off + 18);
+      if (tag === "hhea") {
+        asc = v.getInt16(off + 4);
+        desc = v.getInt16(off + 6);
+      }
+    }
+    return upm ? { asc, desc, upm } : null;
+  } catch {
+    return null;
   }
 }
 
