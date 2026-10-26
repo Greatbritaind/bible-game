@@ -673,6 +673,8 @@ class Sprite
   end
 
   def bitmap=(b)
+    # Like RPG Maker: assigning the same bitmap again changes nothing (src_rect is kept)
+    return if b.equal?(@bitmap)
     @bitmap = b
     @src_rect.set(0, 0, b.width, b.height) if b && !b.disposed?
     __mark
@@ -1600,7 +1602,28 @@ end
 
 class Reset < Exception; end unless defined?(Reset)
 
+# Every Marshal load (data files, Essentials' message files) gets UTF-8 text
+module Marshal
+  class << self
+    alias rgss_original_load load
+    def load(source, proc = nil, **kwargs)
+      rgss_original_load(source, proc || Kernel::RGSS_UTF8_PROC, **kwargs)
+    end
+    alias restore load
+  end
+end
+
 module Kernel
+  # RPG Maker's data files store text without an encoding; it is UTF-8, so mark it as such
+  # (otherwise letters like "é" get split into two broken characters)
+  RGSS_UTF8_PROC = lambda do |obj|
+    if obj.is_a?(String) && obj.encoding == Encoding::BINARY && !obj.frozen?
+      obj.force_encoding(Encoding::UTF_8)
+      obj.force_encoding(Encoding::BINARY) unless obj.valid_encoding?
+    end
+    obj
+  end
+
   def load_data(path)
     File.open(path.to_s.tr("\\", "/"), "rb") { |f| Marshal.load(f) }
   end
