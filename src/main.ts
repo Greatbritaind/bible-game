@@ -107,6 +107,8 @@ async function download(url: string, onProgress: (got: number, total: number) =>
 // Keeps a copy of the big files in the browser so each visit doesn't download ~120 MB again.
 // versions.json (written by the build) changes only when a file's contents change.
 const FILE_CACHE = "game-files-v1";
+/** Where each big file is coming from right now, for the status line. */
+const fileSource: Record<string, "saved" | "web"> = {};
 
 async function fileVersions(): Promise<Record<string, string>> {
   if (new URLSearchParams(location.search).has("fresh")) {
@@ -150,6 +152,7 @@ async function cachedDownload(
     cache = await within(caches.open(FILE_CACHE), 8000);
     const hit = await within(cache.match(key), 8000);
     if (hit) {
+      fileSource[name] = "saved";
       const bytes = await readBody(hit, onProgress, 10000);
       log(`${name}: using saved copy`);
       return bytes;
@@ -157,9 +160,11 @@ async function cachedDownload(
   } catch (e) {
     // the saved copy is unreadable: throw it away and download instead
     log(`${name}: saved copy not usable (${e}), downloading`);
+    fileSource[name] = "web";
     cache = null;
     void caches.delete(FILE_CACHE).catch(() => {});
   }
+  fileSource[name] = "web";
   const bytes = await download(key, onProgress);
   if (cache) {
     const c = cache;
@@ -197,12 +202,29 @@ async function prepare(): Promise<Prepared> {
     const f = total ? Math.min(1, got / total) : 0;
     $("bar-fill").style.width = `${Math.round(f * 100)}%`;
     $("play-label").textContent = `Getting ready… ${Math.round(f * 100)}%`;
+    const mb = (n: number) => Math.round(n / 1048576);
+    const web = Object.values(fileSource).includes("web");
+    lastProgress = performance.now();
+    if (total) setStatus(`${web ? "Downloading" : "Loading from this computer:"} ${mb(got)} of ${mb(total)} MB`);
   };
+  let lastProgress = performance.now();
+  const watch = window.setInterval(() => {
+    const quiet = (performance.now() - lastProgress) / 1000;
+    if (quiet > 15) setStatus(`Waiting for the network… nothing new for ${Math.round(quiet)} seconds.`);
+  }, 1000);
+  setStatus("Checking for updates…");
   const versions = await fileVersions();
-  const [archive, rubyBytes] = await Promise.all([
-    cachedDownload("game.mkxpz", versions["game.mkxpz"], (g, t) => ((progress.game = [g, t]), update())),
-    cachedDownload("ruby.wasm", versions["ruby.wasm"], (g, t) => ((progress.ruby = [g, t]), update())),
-  ]);
+  lastProgress = performance.now();
+  let files: [Uint8Array<ArrayBuffer>, Uint8Array<ArrayBuffer>];
+  try {
+    files = await Promise.all([
+      cachedDownload("game.mkxpz", versions["game.mkxpz"], (g, t) => ((progress.game = [g, t]), update())),
+      cachedDownload("ruby.wasm", versions["ruby.wasm"], (g, t) => ((progress.ruby = [g, t]), update())),
+    ]);
+  } finally {
+    window.clearInterval(watch);
+  }
+  const [archive, rubyBytes] = files;
   log("downloaded");
   setStatus("Starting up…");
   const rubyModule = await WebAssembly.compile(rubyBytes);
@@ -536,7 +558,7 @@ function showMessage(text: string) {
 async function main() {
   const p = await prepare();
   document.title = p.title;
-    setupSaveTools(p.title);
+  setupSaveTools(p.title);
   setStatus((await findSave(p.title)) ? "Your save is on this computer." : "");
   $("bar-fill").style.width = "100%";
   const play = $<HTMLButtonElement>("play");
