@@ -842,8 +842,8 @@ module Graphics
 
     def update
       Audio.__update
-      if $__debug && $__debug_cmd && !$__debug_cmd.empty? && !@__in_transition && @frame_count > 600 && defined?(Scene_Map) && $scene.is_a?(Scene_Map) &&
-         $game_temp && !$game_temp.in_menu && !$game_temp.message_window_showing && !(pbMapInterpreterRunning? rescue true)
+      if $__debug && $__debug_cmd && !$__debug_cmd.empty? && !@__in_transition && (@__dbg_frames = (@__dbg_frames || 0) + 1) > 600 && defined?(Scene_Map) && $scene.is_a?(Scene_Map) &&
+         $game_temp && !$game_temp.in_menu
         cmd = $__debug_cmd
         $__debug_cmd = nil
         puts "[debug] running #{cmd}"

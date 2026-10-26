@@ -26,5 +26,8 @@ rescue Exception => e
   lines = [(e.backtrace || []).first(12).map do |l|
     l.gsub(/Section(\d+)/) { "#{$RGSS_SCRIPTS[$1.to_i][1] rescue $1}" }
   end].flatten
-  RGSSRuntime.call(:fatal, "#{e.class}: #{e.message}", lines.join("\n"))
+  # Essentials keeps the useful details (map, event, script) in its own message
+  message = (pbGetExceptionMessage(e) rescue nil) || e.message
+  message = message.to_s.gsub("\r\n", "\n")
+  RGSSRuntime.call(:fatal, "#{e.class}: #{message}", lines.join("\n"))
 end
