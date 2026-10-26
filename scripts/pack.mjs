@@ -16,7 +16,7 @@ if (!gameDir || !outDir) {
 }
 
 /** Largest bundle; bigger groups are split into numbered parts (smaller pieces get through school filters better). */
-const MAX_BUNDLE = 12 * 1024 * 1024;
+const MAX_BUNDLE = 6 * 1024 * 1024;
 
 // First matching rule wins. Paths are compared in lower case.
 const GROUPS = [

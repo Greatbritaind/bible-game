@@ -107,7 +107,7 @@ async function download(url: string, onProgress: (got: number, total: number) =>
 // ---------------------------------------------------------------- bundles
 // The build (scripts/pack.mjs) splits the game into bundles named after a fingerprint of their contents,
 // listed in manifest.json. The browser keeps every bundle it downloads, so after an update it only
-// downloads the bundles that changed. Bundles download a few at a time; a stalled one is retried.
+// downloads the bundles that changed. Bundles download a few at a time; one that gets no data for 3 minutes is retried (school filters can hold a file back while they check it).
 const FILE_CACHE = "game-files-v2";
 const OLD_CACHES = ["game-files-v1"];
 
@@ -209,7 +209,7 @@ async function fetchBundle(
       try {
         const res = await fetch(url, { signal: ctl.signal });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        raw = await readBody(res, (g) => onProgress(g), 20000);
+        raw = await readBody(res, (g) => onProgress(g), 180000);
         break;
       } catch (e) {
         ctl.abort();
@@ -264,7 +264,7 @@ async function getGameFiles() {
   let lastProgress = performance.now();
   const watch = window.setInterval(() => {
     const quiet = (performance.now() - lastProgress) / 1000;
-    if (quiet > 15) setStatus(`Waiting for the network… nothing new for ${Math.round(quiet)} seconds.`);
+    if (quiet > 15) setStatus(`Waiting for the network… nothing new for ${Math.round(quiet)} seconds. School filters sometimes hold a download while they check it; it should continue.`);
   }, 1000);
   try {
     setStatus("Checking for updates…");
