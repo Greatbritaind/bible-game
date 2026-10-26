@@ -6,6 +6,7 @@ import { Engine } from "./engine";
 import type { StartMessage, ToPage } from "./shared";
 import rgssSource from "./ruby/rgss.rb?raw";
 import bootSource from "./ruby/boot.rb?raw";
+import iteratorsSource from "./ruby/iterators.rb?raw";
 
 const post = (msg: ToPage, transfer: Transferable[] = []) => (self as unknown as Worker).postMessage(msg, transfer);
 
@@ -73,7 +74,31 @@ async function run(start: StartMessage) {
   );
 
   let frames = 0;
-  const api = engine.api();
+  const api = engine.api() as Record<string, (...a: never[]) => unknown>;
+  if (start.debug) {
+    // Count calls per API function (debug only)
+    const counts = new Map<string, number>();
+    for (const [k, f] of Object.entries(api)) {
+      api[k] = (...a: never[]) => {
+        void k;
+        counts.set(k, (counts.get(k) ?? 0) + 1);
+        return (f as (...x: unknown[]) => unknown)(...(a as unknown[]));
+      };
+    }
+    let n = 0;
+    let syncBytes = 0;
+    const origFrame = api.frame;
+    api.frame = ((...a: never[]) => {
+      syncBytes += String(a[0] ?? "").length;
+      if (++n % 120 === 0) {
+        console.log(`[sync] ${Math.round(syncBytes / 120)} chars/frame`);
+        syncBytes = 0;
+        console.log("[calls] " + [...counts].sort((x, y) => y[1] - x[1]).slice(0, 8).map(([k, v]) => `${k}=${v}`).join(" "));
+        counts.clear();
+      }
+      return (origFrame as (...x: unknown[]) => unknown)(...(a as unknown[]));
+    }) as never;
+  }
   const frame = api.frame;
   (self as unknown as { RGSS: unknown }).RGSS = {
     ...api,
@@ -81,6 +106,7 @@ async function run(start: StartMessage) {
       frame(sync);
       if (++frames % 30 === 0) syncSaves();
     },
+    ruby_memory: () => (self as unknown as { __rubyMemory?: () => number }).__rubyMemory?.() ?? 0,
     loading: (i: number, n: number) => {
       if (i % 20 === 0 || i === n) post({ type: "status", text: `Loading game code ${Math.round((i / n) * 100)}%` });
     },
@@ -95,10 +121,13 @@ async function run(start: StartMessage) {
     },
   };
 
-  const { vm } = await RubyVM.instantiateModule({ module: start.rubyModule, wasip1: wasi });
+  const { vm, instance } = await RubyVM.instantiateModule({ module: start.rubyModule, wasip1: wasi });
+  (self as unknown as { __rubyMemory: () => number }).__rubyMemory = () =>
+    (instance.exports.memory as WebAssembly.Memory).buffer.byteLength;
   post({ type: "ready" });
-  vm.eval(`$__game_title = ${JSON.stringify(start.title)}; $__debug = ${start.debug}; $__debug_cmd = ${JSON.stringify(start.debugCommand ?? "")}`);
+  vm.eval(`$__game_title = ${JSON.stringify(start.title)}; $__debug = ${start.debug}; $__debug_gc = ${start.debugCommand === "gc"}; $__debug_cmd = ${JSON.stringify(start.debugCommand ?? "").replace(/#/g, "\\#")}`);
   const [w, h] = start.screen;
   // Synchronous: the game runs until it quits. Graphics.update sleeps between frames.
+  vm.eval(iteratorsSource);
   vm.eval(rgssSource + `\nGraphics.resize_screen(${w}, ${h})\n` + bootSource);
 }

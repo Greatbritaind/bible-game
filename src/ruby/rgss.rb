@@ -36,9 +36,14 @@ module RGSSRuntime
   end
 
   # Serialize everything that changed since the last frame
+  # One reused buffer for the per-frame update text. Building a new large string every frame
+  # fragments WebAssembly memory until it runs out, so the same allocation is kept and refilled.
+  @sync_buffer = String.new(capacity: 1 << 20)
+
   def self.flush
     return "" if @dirty.empty?
-    out = +""
+    out = @sync_buffer
+    out.clear
     @dirty.each do |o|
       next unless o.instance_variable_get(:@__dirty)
       o.instance_variable_set(:@__dirty, false)
@@ -842,16 +847,47 @@ module Graphics
 
     def update
       Audio.__update
-      if $__debug && $__debug_cmd && !$__debug_cmd.empty? && !@__in_transition && (@__dbg_frames = (@__dbg_frames || 0) + 1) > 600 && defined?(Scene_Map) && $scene.is_a?(Scene_Map) &&
+      if $__debug && $__debug_cmd && !$__debug_cmd.empty? && $__debug_cmd != "gc" && !@__in_transition && (@__dbg_frames = (@__dbg_frames || 0) + 1) > 600 && defined?(Scene_Map) && $scene.is_a?(Scene_Map) &&
          $game_temp && !$game_temp.in_menu
         cmd = $__debug_cmd
         $__debug_cmd = nil
         puts "[debug] running #{cmd}"
         eval(cmd, TOPLEVEL_BINDING)
       end
+      if $__debug && (@__gcdbg = (@__gcdbg || 0) + 1) % 300 == 0
+        st = GC.stat
+        counts = ObjectSpace.count_objects
+        top = counts.reject { |k, _| k == :TOTAL || k == :FREE }.sort_by { |_, v| -v }.first(5)
+        require "objspace"
+        if !$__raise_tp
+          $__raises = Hash.new(0)
+          $__raise_tp = TracePoint.new(:raise) do |tp|
+            loc = tp.raised_exception.backtrace&.first.to_s.gsub(/Section(\d+)/) { ($RGSS_SCRIPTS[$1.to_i][1] rescue $1).to_s }
+            $__raises["#{tp.raised_exception.class}: #{tp.raised_exception.message[0, 60]} @ #{loc}"] += 1
+          end
+          $__raise_tp.enable
+        end
+        unless $__raises.empty?
+          puts "[raises] " + $__raises.sort_by { |_, v| -v }.first(5).map { |k, v| "#{v}x #{k}" }.join(" | ")
+          $__raises.clear
+        end
+        puts "[gc] objects=#{ObjectSpace.memsize_of_all / 1048576}MB count=#{st[:count]} live=#{st[:heap_live_slots]} malloc=#{st[:malloc_increase_bytes] / 1024}K oldmalloc=#{st[:oldmalloc_increase_bytes] / 1024}K top=#{top.inspect}"
+      end
       if $__debug && @frame_count % 240 == 120
         where = caller(1, 14).map { |l| l.gsub(/Section(\d+)/) { ($RGSS_SCRIPTS[$1.to_i][1] rescue $1).to_s } }
         puts "[where] " + where.join(" <- ")
+      end
+      GC.start if $__debug_gc && @frame_count % 120 == 0
+      if $__debug
+        if $__prof_tp
+          $__prof_tp.disable
+          puts "[prof] #{$__prof.values.sum} calls in one frame: " + $__prof.sort_by { |_, v| -v }.first(12).map { |k, v| "#{k}=#{v}" }.join(" ")
+          $__prof_tp = nil
+        elsif (@__profn = (@__profn || 0) + 1) % 200 == 0
+          $__prof = Hash.new(0)
+          $__prof_tp = TracePoint.new(:call, :c_call) { |tp| $__prof["#{tp.defined_class}##{tp.method_id}"] += 1 }
+          $__prof_tp.enable
+        end
       end
       sync = RGSSRuntime.flush
       RGSSRuntime.await(:frame, sync)

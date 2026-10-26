@@ -11,6 +11,8 @@ interface Bmp {
   ctx: Ctx;
   w: number;
   h: number;
+  /** Increases whenever the bitmap's pixels change (for the tinted-sprite cache) */
+  ver: number;
 }
 
 interface ViewportRec {
@@ -246,6 +248,7 @@ export class Engine {
         const scaleX = dw / sw,
           scaleY = dh / sh;
         const ctx = d.ctx;
+        d.ver++;
         ctx.globalAlpha = Math.min(1, opacity / 255);
         ctx.drawImage(
           s.canvas,
@@ -263,6 +266,7 @@ export class Engine {
       bmp_fill: (id: number, x: number, y: number, w: number, h: number, r: number, g: number, b: number, a: number) => {
         const bm = this.bitmaps.get(id);
         if (!bm || w <= 0 || h <= 0) return;
+        bm.ver++;
         bm.ctx.clearRect(x, y, w, h);
         if (a > 0) {
           bm.ctx.fillStyle = `rgba(${r | 0},${g | 0},${b | 0},${a / 255})`;
@@ -272,6 +276,7 @@ export class Engine {
       bmp_gradient: (id: number, x: number, y: number, w: number, h: number, c1: string, c2: string, vertical: number) => {
         const bm = this.bitmaps.get(id);
         if (!bm || w <= 0 || h <= 0) return;
+        bm.ver++;
         const g = vertical ? bm.ctx.createLinearGradient(0, y, 0, y + h) : bm.ctx.createLinearGradient(x, 0, x + w, 0);
         g.addColorStop(0, csvColor(c1));
         g.addColorStop(1, csvColor(c2));
@@ -280,7 +285,10 @@ export class Engine {
         bm.ctx.fillRect(x, y, w, h);
       },
       bmp_clear: (id: number, x: number, y: number, w: number, h: number) => {
-        this.bitmaps.get(id)?.ctx.clearRect(x, y, w, h);
+        const bm = this.bitmaps.get(id);
+        if (!bm) return;
+        bm.ver++;
+        bm.ctx.clearRect(x, y, w, h);
       },
       bmp_get_pixel: (id: number, x: number, y: number) => {
         const bm = this.bitmaps.get(id);
@@ -295,6 +303,7 @@ export class Engine {
       bmp_hue: (id: number, hue: number) => {
         const bm = this.bitmaps.get(id);
         if (!bm || hue % 360 === 0) return;
+        bm.ver++;
         const [c, ctx] = this.scratchFor(bm.w, bm.h);
         ctx.clearRect(0, 0, bm.w, bm.h);
         ctx.filter = `hue-rotate(${hue}deg)`;
@@ -306,6 +315,7 @@ export class Engine {
       bmp_blur: (id: number) => {
         const bm = this.bitmaps.get(id);
         if (!bm) return;
+        bm.ver++;
         const [c, ctx] = this.scratchFor(bm.w, bm.h);
         ctx.clearRect(0, 0, bm.w, bm.h);
         ctx.filter = "blur(1px)";
@@ -377,6 +387,7 @@ export class Engine {
         this.applySync(sync);
         this.render();
         const bm = this.bitmaps.get(id);
+        if (bm) bm.ver++;
         bm?.ctx.drawImage(this.back, 0, 0);
       },
 
@@ -409,7 +420,7 @@ export class Engine {
   private bmpNew(w: number, h: number) {
     const [canvas, ctx] = newCanvas(w, h);
     const id = this.nextBitmap++;
-    this.bitmaps.set(id, { canvas, ctx, w, h });
+    this.bitmaps.set(id, { canvas, ctx, w, h, ver: 0 });
     return id;
   }
 
@@ -483,6 +494,7 @@ export class Engine {
   ) {
     const bm = this.bitmaps.get(id);
     if (!bm) return;
+    bm.ver++;
     const ctx = bm.ctx;
     const t = this.layout(str, names, size, bold, italic);
     ctx.font = t.font;
@@ -657,7 +669,7 @@ export class Engine {
   private renderTime = 0;
   private frame(sync: string) {
     if ((self as unknown as { __debug?: boolean }).__debug && ++this.debugFrames % 120 === 0) {
-      console.log(`[perf] average draw time ${(this.renderTime / 120).toFixed(2)} ms/frame, ${this.bitmaps.size} bitmaps (${Math.round(this.bitmapBytes() / 1048576)} MB), image cache ${Math.round(this.cacheBytes / 1048576)} MB`);
+      console.log(`[perf] average draw time ${(this.renderTime / 120).toFixed(2)} ms/frame, ${this.bitmaps.size} bitmaps (${Math.round(this.bitmapBytes() / 1048576)} MB), image cache ${Math.round(this.cacheBytes / 1048576)} MB, ruby memory ${Math.round(((self as unknown as { __rubyMemory?: () => number }).__rubyMemory?.() ?? 0) / 1048576)} MB`);
       if (this.debugFrames % 600 === 0) this.dumpScene();
 
       this.renderTime = 0;
@@ -774,6 +786,9 @@ export class Engine {
     else this.drawPlane(ctx, o, offX, offY, vw, vh, _vp);
   }
 
+  private effectCache = new Map<string, Canvas>();
+  private effectBytes = 0;
+
   private drawSprite(ctx: Ctx, s: SpriteRec, offX: number, offY: number) {
     if (s.opacity <= 0 || s.zx === 0 || s.zy === 0) return;
     const bm = this.bitmaps.get(s.bmp);
@@ -792,19 +807,36 @@ export class Engine {
     const needsEffect = hasTone(s.tone) || color[3] > 0 || (s.bush > 0 && s.bushOpacity < 255);
     if (flashing && s.flash[3] < 0) return; // flash with no color hides the sprite
     if (needsEffect) {
-      const [c, cctx] = this.scratchFor2(sw, sh);
-      cctx.clearRect(0, 0, sw, sh);
-      cctx.drawImage(bm.canvas, sx, sy, sw, sh, 0, 0, sw, sh);
-      const img = cctx.getImageData(0, 0, sw, sh);
-      applyToneColor(img.data, s.tone, color, false);
-      if (s.bush > 0 && s.bushOpacity < 255) {
-        const startRow = Math.max(0, sh - Math.round(s.bush / Math.max(s.zy, 0.01)));
-        const f = s.bushOpacity / 255;
-        for (let yy = startRow; yy < sh; yy++) {
-          for (let xx = 0; xx < sw; xx++) img.data[(yy * sw + xx) * 4 + 3] *= f;
+      // Tinted/colored copies are cached: map tiles share a few tileset pictures, and
+      // recoloring them pixel by pixel every frame made walking around very slow.
+      const bushRows = s.bush > 0 && s.bushOpacity < 255 ? Math.round(s.bush / Math.max(s.zy, 0.01)) : 0;
+      const key = `${s.bmp}:${bm.ver}:${sx},${sy},${sw},${sh}:${s.tone}:${color}:${bushRows},${s.bushOpacity}`;
+      let c = this.effectCache.get(key);
+      if (c) {
+        this.effectCache.delete(key); // keep recently used entries at the end
+        this.effectCache.set(key, c);
+      } else {
+        let cctx: Ctx;
+        [c, cctx] = newCanvasRead(sw, sh);
+        cctx.drawImage(bm.canvas, sx, sy, sw, sh, 0, 0, sw, sh);
+        const img = cctx.getImageData(0, 0, sw, sh);
+        applyToneColor(img.data, s.tone, color, false);
+        if (bushRows > 0) {
+          const startRow = Math.max(0, sh - bushRows);
+          const f = s.bushOpacity / 255;
+          for (let yy = startRow; yy < sh; yy++) {
+            for (let xx = 0; xx < sw; xx++) img.data[(yy * sw + xx) * 4 + 3] *= f;
+          }
+        }
+        cctx.putImageData(img, 0, 0);
+        this.effectCache.set(key, c);
+        this.effectBytes += sw * sh * 4;
+        while (this.effectBytes > 48 * 1024 * 1024 && this.effectCache.size > 1) {
+          const [k, old] = this.effectCache.entries().next().value!;
+          this.effectBytes -= old.width * old.height * 4;
+          this.effectCache.delete(k);
         }
       }
-      cctx.putImageData(img, 0, 0);
       source = c;
       srcX = 0;
       srcY = 0;
@@ -812,10 +844,19 @@ export class Engine {
     ctx.save();
     ctx.translate(offX + s.x, offY + s.y);
     if (s.angle) ctx.rotate((-s.angle * Math.PI) / 180);
-    ctx.scale(s.mirror ? -s.zx : s.zx, s.zy);
+    ctx.scale(s.zx, s.zy);
     ctx.globalAlpha = s.opacity / 255;
     ctx.globalCompositeOperation = BLEND[s.blend] ?? "source-over";
-    ctx.drawImage(source, srcX, srcY, sw, sh, -s.ox + (sx - s.sx), -s.oy + (sy - s.sy), sw, sh);
+    const dy = -s.oy + (sy - s.sy);
+    if (s.mirror) {
+      // Like RPG Maker: the picture flips inside its own rectangle (it doesn't move)
+      const dx = -s.ox + (s.sx + s.sw - (sx + sw));
+      ctx.translate(dx + sw, dy);
+      ctx.scale(-1, 1);
+      ctx.drawImage(source, srcX, srcY, sw, sh, 0, 0, sw, sh);
+    } else {
+      ctx.drawImage(source, srcX, srcY, sw, sh, -s.ox + (sx - s.sx), dy, sw, sh);
+    }
     ctx.restore();
   }
 
