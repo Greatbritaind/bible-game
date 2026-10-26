@@ -104,6 +104,78 @@ async function download(url: string, onProgress: (got: number, total: number) =>
   return readBody(res, onProgress);
 }
 
+// ---------------------------------------------------------------- read aloud
+// The game sends the text of each message box (see src/ruby/readaloud.rb); when the student has read
+// aloud on, the browser's built-in voice speaks it. The setting is remembered on this computer.
+const readAloud = (() => {
+  const KEY = "readAloud";
+  let on = false;
+  try {
+    on = localStorage.getItem(KEY) === "on";
+  } catch {
+    /* storage blocked: starts off */
+  }
+  const supported = typeof speechSynthesis !== "undefined";
+
+  /** A clear English voice: prefer the Chromebook's Google voices. */
+  const pickVoice = () => {
+    const voices = speechSynthesis.getVoices().filter((v) => v.lang.toLowerCase().startsWith("en"));
+    return (
+      voices.find((v) => /google us english/i.test(v.name)) ??
+      voices.find((v) => v.lang.toLowerCase() === "en-us" && /google|natural/i.test(v.name)) ??
+      voices.find((v) => v.lang.toLowerCase() === "en-us" && v.localService) ??
+      voices.find((v) => v.lang.toLowerCase() === "en-us") ??
+      voices[0] ??
+      null
+    );
+  };
+
+  const speak = (text: string) => {
+    if (!supported) return;
+    speechSynthesis.cancel(); // a new message replaces the one being read
+    const u = new SpeechSynthesisUtterance(text);
+    const voice = pickVoice();
+    if (voice) u.voice = voice;
+    u.lang = voice?.lang ?? "en-US";
+    u.rate = 0.95;
+    speechSynthesis.speak(u);
+  };
+
+  const show = () => {
+    const b = $("hud-read");
+    b.textContent = on ? "🔊" : "🔈";
+    b.title = on ? "Read aloud: on" : "Read aloud: off";
+    b.setAttribute("aria-pressed", String(on));
+    b.classList.toggle("on", on);
+  };
+
+  return {
+    setup() {
+      const b = $("hud-read");
+      if (!supported) {
+        b.hidden = true;
+        return;
+      }
+      show();
+      b.onclick = () => {
+        on = !on;
+        try {
+          localStorage.setItem(KEY, on ? "on" : "off");
+        } catch {
+          /* ignore */
+        }
+        show();
+        toast(on ? "Read aloud is on" : "Read aloud is off");
+        if (!on) speechSynthesis.cancel();
+        $("screen").focus();
+      };
+    },
+    say(text: string) {
+      if (on) speak(text);
+    },
+  };
+})();
+
 // ---------------------------------------------------------------- bundles
 // The build (scripts/pack.mjs) splits the game into bundles named after a fingerprint of their contents,
 // listed in manifest.json. The browser keeps every bundle it downloads, so after an update it only
@@ -558,6 +630,7 @@ function runGame(p: Prepared, existingSaves: [string, Uint8Array][]) {
     else void document.documentElement.requestFullscreen().catch(() => {});
   });
   $("keys-pop").onclick = () => ($("keys-pop").hidden = true);
+  readAloud.setup();
 
   // ---- image decoding for the game thread (native decoders live on the page)
   const decodeCanvas = new OffscreenCanvas(1, 1);
@@ -622,6 +695,9 @@ function runGame(p: Prepared, existingSaves: [string, Uint8Array][]) {
         break;
       case "save":
         void saves.store(SAVE_KEY, m.path, m.data);
+        break;
+      case "speak":
+        readAloud.say(m.text);
         break;
       case "clipboard":
         navigator.clipboard?.writeText(m.text).catch(() => {});

@@ -62,6 +62,7 @@ export type ToPage =
   | { type: "ended" }
   | { type: "fatal"; message: string; backtrace: string }
   | { type: "clipboard"; text: string }
+  | { type: "speak"; text: string }
   | { type: "log"; level: "log" | "warn" | "error"; text: string };
 
 /** Message the page sends to start the game thread. */

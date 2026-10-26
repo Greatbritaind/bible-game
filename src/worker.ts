@@ -7,6 +7,7 @@ import type { StartMessage, ToPage } from "./shared";
 import rgssSource from "./ruby/rgss.rb?raw";
 import bootSource from "./ruby/boot.rb?raw";
 import iteratorsSource from "./ruby/iterators.rb?raw";
+import readAloudSource from "./ruby/readaloud.rb?raw";
 
 const post = (msg: ToPage, transfer: Transferable[] = []) => (self as unknown as Worker).postMessage(msg, transfer);
 
@@ -111,6 +112,7 @@ async function run(start: StartMessage) {
       if (i % 20 === 0 || i === n) post({ type: "status", text: `Loading game code ${Math.round((i / n) * 100)}%` });
     },
     next_frame: () => engine.waitFrame(),
+    speak: (text: string) => post({ type: "speak", text: String(text) }),
     game_ended: () => {
       syncSaves();
       post({ type: "ended" });
@@ -129,5 +131,5 @@ async function run(start: StartMessage) {
   const [w, h] = start.screen;
   // Synchronous: the game runs until it quits. Graphics.update sleeps between frames.
   vm.eval(iteratorsSource);
-  vm.eval(rgssSource + `\nGraphics.resize_screen(${w}, ${h})\n` + bootSource);
+  vm.eval(rgssSource + `\nGraphics.resize_screen(${w}, ${h})\n` + readAloudSource + "\n" + bootSource);
 }

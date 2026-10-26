@@ -417,3 +417,8 @@ kbd {
   font-family: ui-monospace, monospace;
   font-size: 13px;
 }
+
+/* Read aloud button stands out while it's on */
+.hud-btn.on {
+  background: var(--gold);
+}
