@@ -1,22 +1,26 @@
 {
-  "name": "bible-player",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "name": "bible-game-player",
+  "version": "0.1.0",
+  "description": "Plays RPG Maker XP / Pok\u00e9mon Essentials games in the browser (Chromebooks included).",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "vite",
+    "build": "tsc --noEmit -p . && vite build",
+    "preview": "vite preview",
+    "setup": "node scripts/setup.mjs"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
     "@bjorn3/browser_wasi_shim": "^0.4.2",
+    "@fontsource/atkinson-hyperlegible": "^5.3.0",
     "@ruby/3.3-wasm-wasi": "^2.10.1",
     "@ruby/wasm-wasi": "^2.10.1",
-    "fflate": "^0.8.3"
+    "coi-serviceworker": "^0.1.7",
+    "fflate": "^0.8.3",
+    "spessasynth_lib": "^4.3.14"
   },
   "devDependencies": {
     "typescript": "^7.0.2",
     "vite": "^8.3.5"
-  }
+  },
+  "private": true,
+  "type": "module"
 }

@@ -633,6 +633,7 @@ export class Engine {
   private frame(sync: string) {
     if ((self as unknown as { __debug?: boolean }).__debug && ++this.debugFrames % 120 === 0) {
       console.log(`[perf] average draw time ${(this.renderTime / 120).toFixed(2)} ms/frame`);
+      if (this.debugFrames % 600 === 0) this.dumpScene();
       this.renderTime = 0;
     }
     const t = performance.now();
@@ -730,7 +731,6 @@ export class Engine {
     }
   }
 
-  private backReadCtx: Ctx | null = null;
   private backCtxRead(): Ctx {
     // Reading pixels back is only needed when tones/colors are used
     return this.backCtx;
