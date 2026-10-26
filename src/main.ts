@@ -131,7 +131,7 @@ function setupSaveTools(title: string) {
   let pending: Uint8Array | null = null;
 
   const write = async (data: Uint8Array) => {
-    await saves.store(title, SAVE_FILE, data);
+    await saves.store(SAVE_KEY, SAVE_FILE, data);
     toast("Save loaded ✔ Press Play, then Continue.");
     setStatus("Your save is on this computer.");
   };
@@ -165,8 +165,11 @@ function setupSaveTools(title: string) {
   };
 }
 
-async function findSave(title: string) {
-  return (await saves.load(title)).find(([n]) => n.toLowerCase() === SAVE_FILE.toLowerCase())?.[1] ?? null;
+/** Saves stay under the game's original name so renaming the game never loses anyone's progress. */
+const SAVE_KEY = "Bible Game";
+
+async function findSave(_title: string) {
+  return (await saves.load(SAVE_KEY)).find(([n]) => n.toLowerCase() === SAVE_FILE.toLowerCase())?.[1] ?? null;
 }
 
 async function downloadSave(title: string) {
@@ -388,7 +391,7 @@ function runGame(p: Prepared, existingSaves: [string, Uint8Array][]) {
         log(m.text);
         break;
       case "save":
-        void saves.store(title, m.path, m.data);
+        void saves.store(SAVE_KEY, m.path, m.data);
         break;
       case "clipboard":
         navigator.clipboard?.writeText(m.text).catch(() => {});
@@ -442,8 +445,7 @@ function showMessage(text: string) {
 async function main() {
   const p = await prepare();
   document.title = p.title;
-  $("game-title").textContent = p.title;
-  setupSaveTools(p.title);
+    setupSaveTools(p.title);
   setStatus((await findSave(p.title)) ? "Your save is on this computer." : "");
   $("bar-fill").style.width = "100%";
   const play = $<HTMLButtonElement>("play");
@@ -454,7 +456,7 @@ async function main() {
     await new Promise<void>((resolve) => play.addEventListener("click", () => resolve(), { once: true }));
   }
   $("start").hidden = true;
-  runGame(p, await saves.load(p.title));
+  runGame(p, await saves.load(SAVE_KEY));
 }
 
 main().catch((e) => {

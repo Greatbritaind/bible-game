@@ -1,4 +1,4 @@
-# Bible Game player
+# Road to Jerusalem player
 
 Plays the RPG Maker XP / Pokémon Essentials game in `game/` in a web browser, including on school Chromebooks. Nothing needs to be installed.
 
@@ -16,7 +16,7 @@ Plays the RPG Maker XP / Pokémon Essentials game in `game/` in a web browser, i
 2. Commit and push to `main`. GitHub Desktop is the easiest way.
 3. Wait for the green check on the **Actions** tab (a few minutes), then refresh the game page.
 
-The build always names the game "Bible Game" (saves are stored under that name), whatever `mkxp.json` says.
+The build always names the game "Road to Jerusalem", whatever `mkxp.json` says. Saves are stored under the fixed key "Bible Game" so renaming never loses progress.
 
 ## Controls
 

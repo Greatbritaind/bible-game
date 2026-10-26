@@ -40,7 +40,7 @@ jobs:
           # Windows-only and editor files aren't needed in the browser
           rm -rf PBS ./*.exe ./*.dll ./*.html ./*.txt ./*.URL ./*.bmp ./*.nc Game.rxproj
           # Always use the same game name: saves are stored under it
-          sed -i -E 's/^(\s*)("windowTitle":\s*)"[^"]*"/\1\2"Bible Game"/' mkxp.json
+          sed -i -E 's/^(\s*)("windowTitle":\s*)"[^"]*"/\1\2"Road to Jerusalem"/' mkxp.json
           grep '"windowTitle"' mkxp.json
           # Files are stored uncompressed so the player can read them without unpacking
           rpzip -r ../public/game.mkxpz ./*
