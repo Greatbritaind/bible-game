@@ -176,6 +176,83 @@ const readAloud = (() => {
   };
 })();
 
+// ---------------------------------------------------------------- password
+// The build writes access.json with a fingerprint (salted SHA-256) of the teacher's password, never the
+// password itself. No access.json, or one without a hash, means no password. Spaces, punctuation and
+// capital letters don't matter when typing it. A computer that entered the right password remembers it
+// until the teacher changes the password.
+// This is a simple lock to keep the game to the teacher's students, not real security.
+const ACCESS_KEY = "passwordOk";
+
+function normalizePassword(s: string) {
+  return s.toLowerCase().replace(/[^\p{L}\p{N}]/gu, "");
+}
+
+async function sha256(text: string) {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+/** Resolves once the student may play: right away when there's no password or it was entered before. */
+async function passwordGate(): Promise<void> {
+  let access: { salt?: string; hash?: string } = {};
+  let saved: string | null = null;
+  try {
+    saved = localStorage.getItem(ACCESS_KEY);
+  } catch {
+    /* storage blocked: ask every time */
+  }
+  try {
+    const res = await fetch("access.json", { cache: "no-store" });
+    if (res.ok) access = await res.json();
+    else if (res.status !== 404) throw new Error(String(res.status));
+  } catch {
+    if (saved) return; // offline: trust a computer that got in before
+    access = { hash: "unreachable" };
+  }
+  if (!access.hash) return; // no password set
+  if (saved === access.hash) return;
+
+  const form = $<HTMLFormElement>("password-form");
+  const input = $<HTMLInputElement>("password");
+  const msg = $("password-msg");
+  form.hidden = false;
+  input.focus();
+  $("password-show").onclick = () => {
+    input.type = input.type === "password" ? "text" : "password";
+    input.focus();
+  };
+  await new Promise<void>((resolve) => {
+    const check = async () => {
+      const typed = normalizePassword(input.value);
+      if (!typed) return;
+      if (access.hash === "unreachable") {
+        msg.textContent = "Couldn't check the password. Check the internet and reload.";
+        return;
+      }
+      if ((await sha256(`${access.salt ?? ""}:${typed}`)) === access.hash) {
+        try {
+          localStorage.setItem(ACCESS_KEY, access.hash!);
+        } catch {
+          /* ignore */
+        }
+        form.hidden = true;
+        resolve();
+      } else {
+        msg.textContent = "That's not it. Ask your teacher for the password.";
+        input.select();
+      }
+    };
+    form.onsubmit = (e) => {
+      e.preventDefault();
+      void check();
+    };
+    // the Play button also checks the password
+    $("play").addEventListener("click", () => void check());
+    input.oninput = () => (msg.textContent = "");
+  });
+}
+
 // ---------------------------------------------------------------- old TV look
 // Scanlines and dark edges drawn over the game with CSS (see #crt in style.css). Off by default;
 // the choice is remembered on this computer.
@@ -786,6 +863,11 @@ function showMessage(text: string) {
 
 // ---------------------------------------------------------------- start screen
 async function main() {
+  // students can type the password while the game downloads
+  let unlocked = false;
+  const gate = passwordGate().then(() => {
+    unlocked = true;
+  });
   const p = await prepare();
   document.title = p.title;
   setupSaveTools(p.title);
@@ -794,8 +876,12 @@ async function main() {
   const play = $<HTMLButtonElement>("play");
   play.disabled = false;
   $("play-label").textContent = "Play";
-  play.focus();
-  if (!/[?&]autostart/.test(location.search)) {
+  if (!unlocked) {
+    // Play (or Enter) checks the password; the game starts as soon as it's right
+    $("password").focus();
+    await gate;
+  } else if (!/[?&]autostart/.test(location.search)) {
+    play.focus();
     await new Promise<void>((resolve) => play.addEventListener("click", () => resolve(), { once: true }));
   }
   $("start").hidden = true;

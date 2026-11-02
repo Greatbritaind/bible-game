@@ -212,6 +212,43 @@ h1 {
   transition: width 0.2s;
 }
 
+/* ---------- Password ---------- */
+.password {
+  margin: 0 0 16px;
+}
+.password label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.password .row {
+  display: flex;
+  gap: 8px;
+}
+.password input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 24px;
+  color: var(--ink);
+  background: #fffaf0;
+  border: 3px solid var(--ink);
+  border-radius: 6px;
+}
+.password input:focus {
+  outline: 4px solid var(--clay);
+  outline-offset: 2px;
+}
+.password-msg {
+  min-height: 1.4em;
+  margin: 6px 0 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--clay);
+}
+
 .status {
   min-height: 1.4em;
   margin: 0 0 14px;

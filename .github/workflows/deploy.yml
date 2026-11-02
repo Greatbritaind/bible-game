@@ -46,6 +46,13 @@ jobs:
           node scripts/pack.mjs game public
           rm public/ruby.wasm
 
+      - name: Password
+        # Set or change it under Settings > Secrets and variables > Actions > GAME_PASSWORD,
+        # then run this workflow again. Delete the secret to remove the password.
+        env:
+          GAME_PASSWORD: ${{ secrets.GAME_PASSWORD }}
+        run: node scripts/password.mjs public/access.json
+
       - name: Build the page
         run: npm run build
 
