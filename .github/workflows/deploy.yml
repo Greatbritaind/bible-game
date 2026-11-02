@@ -47,8 +47,8 @@ jobs:
           rm public/ruby.wasm
 
       - name: Password
-        # Set or change it under Settings > Secrets and variables > Actions > GAME_PASSWORD,
-        # then run this workflow again. Delete the secret to remove the password.
+        # public/access.json holds a fingerprint of the password (never the password itself).
+        # A GAME_PASSWORD secret (Settings > Secrets and variables > Actions), if set, replaces it.
         env:
           GAME_PASSWORD: ${{ secrets.GAME_PASSWORD }}
         run: node scripts/password.mjs public/access.json
