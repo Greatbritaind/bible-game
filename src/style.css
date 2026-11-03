@@ -345,6 +345,35 @@ kbd {
   background: rgba(27, 35, 71, 0.95);
 }
 
+/* Voice picker for read aloud */
+.voices-title {
+  margin: 0;
+  font-weight: 700;
+}
+.voice-list {
+  display: grid;
+  gap: 6px;
+  max-height: min(50vh, 360px);
+  overflow-y: auto;
+}
+.voice-list button {
+  padding: 8px 12px;
+  font-size: 18px;
+  text-align: left;
+  color: var(--ink);
+  background: #fff6d8;
+  border: 3px solid #fff6d8;
+  border-radius: 6px;
+}
+.voice-list button[aria-checked="true"] {
+  background: var(--gold);
+  border-color: var(--ink);
+  font-weight: 700;
+}
+.voice-list button[aria-checked="true"]::before {
+  content: "✓ ";
+}
+
 /* ---------- While playing ---------- */
 
 #hud {

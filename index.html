@@ -57,7 +57,7 @@
     </main>
 
     <nav id="hud" hidden>
-      <button id="hud-read" class="hud-btn" title="Read aloud: off" aria-label="Read aloud" aria-pressed="false">🔈</button>
+      <button id="hud-read" class="hud-btn" title="Read aloud: off. Right-click or hold to choose a voice." aria-label="Read aloud" aria-pressed="false">🔈</button>
       <button id="hud-crt" class="hud-btn" title="Old TV look: off" aria-label="Old TV look" aria-pressed="false">📺</button>
       <button id="hud-keys" class="hud-btn" title="Keys" aria-label="Show keys">⌨</button>
       <button id="hud-save" class="hud-btn" title="Download my save" aria-label="Download my save">⬇</button>
@@ -70,6 +70,12 @@
       <div class="key-row"><span class="keycaps"><kbd>X</kbd><kbd>Esc</kbd></span><span>Back · hold to run</span></div>
       <div class="key-row"><span class="keycaps"><kbd>Z</kbd></span><span>Menu</span></div>
       <p class="hint">Save in the game menu first. Then press ⬇ to keep a copy.</p>
+    </div>
+
+    <div id="voice-pop" class="keys pop voices" role="dialog" aria-label="Choose a voice" hidden>
+      <p class="voices-title">Choose a voice</p>
+      <div id="voice-list" class="voice-list"></div>
+      <button id="voice-done" class="small">Done</button>
     </div>
 
     <div id="touchpad" hidden>

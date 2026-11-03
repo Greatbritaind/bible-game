@@ -109,7 +109,15 @@ async function download(url: string, onProgress: (got: number, total: number) =>
 // aloud on, the browser's built-in voice speaks it. The setting is remembered on this computer.
 const readAloud = (() => {
   const KEY = "readAloud";
+  const VOICE_KEY = "readAloudVoice";
+  const SAMPLE = "Shalom! I'm the voice that will read your game.";
   let on = false;
+  let chosen: string | null = null; // voiceURI picked by the student
+  try {
+    chosen = localStorage.getItem(VOICE_KEY);
+  } catch {
+    /* ignore */
+  }
   try {
     on = localStorage.getItem(KEY) === "on";
   } catch {
@@ -117,10 +125,18 @@ const readAloud = (() => {
   }
   const supported = typeof speechSynthesis !== "undefined";
 
-  /** A clear English voice: prefer the Chromebook's Google voices. */
+  /** English voices on this computer (all voices if it has no English ones). */
+  const englishVoices = () => {
+    const all = speechSynthesis.getVoices();
+    const en = all.filter((v) => v.lang.toLowerCase().startsWith("en"));
+    return en.length ? en : all;
+  };
+
+  /** The student's chosen voice, or a clear English one: prefer the Chromebook's Google voices. */
   const pickVoice = () => {
-    const voices = speechSynthesis.getVoices().filter((v) => v.lang.toLowerCase().startsWith("en"));
+    const voices = englishVoices();
     return (
+      (chosen ? voices.find((v) => v.voiceURI === chosen) : undefined) ??
       voices.find((v) => /google us english/i.test(v.name)) ??
       voices.find((v) => v.lang.toLowerCase() === "en-us" && /google|natural/i.test(v.name)) ??
       voices.find((v) => v.lang.toLowerCase() === "en-us" && v.localService) ??
@@ -130,11 +146,10 @@ const readAloud = (() => {
     );
   };
 
-  const speak = (text: string) => {
+  const speak = (text: string, voice = pickVoice()) => {
     if (!supported) return;
     speechSynthesis.cancel(); // a new message replaces the one being read
     const u = new SpeechSynthesisUtterance(text);
-    const voice = pickVoice();
     if (voice) u.voice = voice;
     u.lang = voice?.lang ?? "en-US";
     u.rate = 0.95;
@@ -144,9 +159,50 @@ const readAloud = (() => {
   const show = () => {
     const b = $("hud-read");
     b.textContent = on ? "🔊" : "🔈";
-    b.title = on ? "Read aloud: on" : "Read aloud: off";
+    b.title = `Read aloud: ${on ? "on" : "off"}. Right-click or hold to choose a voice.`;
     b.setAttribute("aria-pressed", String(on));
     b.classList.toggle("on", on);
+  };
+
+  // ---- voice picker: right-click (two-finger tap) or hold the speaker button
+  const pop = $("voice-pop");
+  const list = $("voice-list");
+  const fillList = () => {
+    const current = pickVoice();
+    list.replaceChildren();
+    const voices = englishVoices();
+    if (!voices.length) {
+      list.textContent = "This computer has no voices to choose from.";
+      return;
+    }
+    for (const v of voices) {
+      const item = document.createElement("button");
+      item.setAttribute("role", "radio");
+      item.setAttribute("aria-checked", String(v.voiceURI === current?.voiceURI));
+      item.textContent = v.name.replace(/^(Microsoft|Google) /, "").replace(/ - English.*$/, "");
+      item.title = `${v.name} (${v.lang})`;
+      item.onclick = () => {
+        chosen = v.voiceURI;
+        try {
+          localStorage.setItem(VOICE_KEY, chosen);
+        } catch {
+          /* ignore */
+        }
+        for (const other of list.children) other.setAttribute("aria-checked", String(other === item));
+        speak(SAMPLE, v);
+      };
+      list.append(item);
+    }
+  };
+  const openPicker = () => {
+    fillList();
+    pop.hidden = false;
+    (list.querySelector('[aria-checked="true"]') as HTMLElement | null)?.focus();
+  };
+  const closePicker = () => {
+    pop.hidden = true;
+    speechSynthesis.cancel();
+    $("screen").focus();
   };
 
   return {
@@ -157,7 +213,30 @@ const readAloud = (() => {
         return;
       }
       show();
+      // voices can arrive a moment after the page loads
+      speechSynthesis.addEventListener?.("voiceschanged", () => {
+        if (!pop.hidden) fillList();
+      });
+      $("voice-done").onclick = closePicker;
+      b.addEventListener("contextmenu", (e) => {
+        e.preventDefault();
+        openPicker();
+      });
+      let holdTimer = 0;
+      let held = false;
+      b.addEventListener("pointerdown", () => {
+        held = false;
+        holdTimer = window.setTimeout(() => {
+          held = true;
+          openPicker();
+        }, 600);
+      });
+      for (const ev of ["pointerup", "pointerleave", "pointercancel"]) b.addEventListener(ev, () => clearTimeout(holdTimer));
       b.onclick = () => {
+        if (held) {
+          held = false; // a long press opened the picker; don't also switch read aloud
+          return;
+        }
         on = !on;
         try {
           localStorage.setItem(KEY, on ? "on" : "off");
@@ -165,7 +244,7 @@ const readAloud = (() => {
           /* ignore */
         }
         show();
-        toast(on ? "Read aloud is on" : "Read aloud is off");
+        toast(on ? "Read aloud is on. Right-click the speaker to pick a voice." : "Read aloud is off");
         if (!on) speechSynthesis.cancel();
         $("screen").focus();
       };
