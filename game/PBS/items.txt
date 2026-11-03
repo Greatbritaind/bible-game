@@ -6571,4 +6571,44 @@ Pocket = 8
 Price = 0
 Flags = KeyItem
 Description = A wrapped bundle, tied with twine. Smells like fresh bread. 
+#-------------------------------
+[EMPTYJUG]
+Name = Empty Jug
+NamePlural = Empty Jugs
+Pocket = 8
+Price = 0
+Flags = KeyItem
+Description = An empty jug. Fill it at a well.
+#-------------------------------
+[WATERJUG]
+Name = Water Jug
+NamePlural = Water Jugs
+Pocket = 8
+Price = 0
+Flags = KeyItem
+Description = A jug full of well water.
+#-------------------------------
+[CUPOFWINE]
+Name = Cup of Wine
+NamePlural = Cups of Wine
+Pocket = 8
+Price = 0
+Flags = KeyItem
+Description = A cup drawn from the jars.
+#-------------------------------
+[FISHINGNET]
+Name = Fishing Net
+NamePlural = Fishing Nets
+Pocket = 8
+Price = 0
+Flags = KeyItem
+Description = A linen casting net with stone weights. Fishermen use it on the Sea of Galilee.
+#-------------------------------
+[BREAD]
+Name = Bread
+NamePlural = Loaves of Bread
+Pocket = 8
+Price = 0
+Flags = KeyItem
+Description = A round loaf of barley bread.
 
