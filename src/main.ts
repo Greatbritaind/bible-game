@@ -258,10 +258,10 @@ const readAloud = (() => {
 // ---------------------------------------------------------------- password
 // The build writes access.json with a fingerprint (salted SHA-256) of the teacher's password, never the
 // password itself. No access.json, or one without a hash, means no password. Spaces, punctuation and
-// capital letters don't matter when typing it. A computer that entered the right password remembers it
-// until the teacher changes the password.
+// capital letters don't matter when typing it. It's asked for every time the game is opened, so
+// students can only play when the teacher types it in. The box isn't a real password field, so Chrome
+// doesn't offer to save or fill it in.
 // This is a simple lock to keep the game to the teacher's students, not real security.
-const ACCESS_KEY = "passwordOk";
 
 function normalizePassword(s: string) {
   return s.toLowerCase().replace(/[^\p{L}\p{N}]/gu, "");
@@ -272,33 +272,31 @@ async function sha256(text: string) {
   return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-/** Resolves once the student may play: right away when there's no password or it was entered before. */
+/** Resolves once the right password is typed (right away when there's no password). */
 async function passwordGate(): Promise<void> {
-  let access: { salt?: string; hash?: string } = {};
-  let saved: string | null = null;
   try {
-    saved = localStorage.getItem(ACCESS_KEY);
+    localStorage.removeItem("passwordOk"); // older versions remembered the password
   } catch {
-    /* storage blocked: ask every time */
+    /* ignore */
   }
+  let access: { salt?: string; hash?: string } = {};
   try {
     const res = await fetch("access.json", { cache: "no-store" });
     if (res.ok) access = await res.json();
     else if (res.status !== 404) throw new Error(String(res.status));
   } catch {
-    if (saved) return; // offline: trust a computer that got in before
     access = { hash: "unreachable" };
   }
   if (!access.hash) return; // no password set
-  if (saved === access.hash) return;
 
   const form = $<HTMLFormElement>("password-form");
   const input = $<HTMLInputElement>("password");
   const msg = $("password-msg");
+  input.value = "";
   form.hidden = false;
   input.focus();
   $("password-show").onclick = () => {
-    input.type = input.type === "password" ? "text" : "password";
+    input.classList.toggle("masked");
     input.focus();
   };
   await new Promise<void>((resolve) => {
@@ -310,11 +308,7 @@ async function passwordGate(): Promise<void> {
         return;
       }
       if ((await sha256(`${access.salt ?? ""}:${typed}`)) === access.hash) {
-        try {
-          localStorage.setItem(ACCESS_KEY, access.hash!);
-        } catch {
-          /* ignore */
-        }
+        input.value = "";
         form.hidden = true;
         resolve();
       } else {
