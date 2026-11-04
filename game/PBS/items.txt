@@ -6611,4 +6611,11 @@ Pocket = 8
 Price = 0
 Flags = KeyItem
 Description = A round loaf of barley bread.
-
+#-------------------------------
+[RUNNINGSANDALS]
+Name = Running Sandals
+NamePlural = Running Sandals
+Pocket = 8
+Price = 0
+Flags = KeyItem
+Description = Light leather sandals for running. Hold the Back button while you move.
