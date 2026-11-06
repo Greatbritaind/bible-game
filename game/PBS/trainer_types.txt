@@ -450,3 +450,13 @@ BaseMoney = 8
 Name = Elder Woman
 Gender = Female
 BaseMoney = 32
+#-------------------------------
+[PHARISEE]
+Name = Pharisee
+Gender = Male
+BaseMoney = 20
+#-------------------------------
+[ELDER]
+Name = Elder
+Gender = Male
+BaseMoney = 16

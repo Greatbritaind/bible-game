@@ -168,4 +168,14 @@ Pokemon = RATTATA,6
 LoseText = Not bad. Don't tell the others.
 Pokemon = MANKEY,7
 Pokemon = RATTATA,6
+#-------------------------------
+[PHARISEE,Nahum]
+LoseText = Well fought. Wisdom and courage go together.
+Pokemon = ABRA,12
+Pokemon = DROWZEE,13
+#-------------------------------
+[ELDER,Abner]
+LoseText = My Pokémon are old, but proud.
+Pokemon = GEODUDE,12
+Pokemon = MACHOP,13
 
