@@ -113,6 +113,7 @@ async function run(start: StartMessage) {
     },
     next_frame: () => engine.waitFrame(),
     speak: (text: string) => post({ type: "speak", text: String(text) }),
+    progress: () => post({ type: "progress" }),
     game_ended: () => {
       syncSaves();
       post({ type: "ended" });

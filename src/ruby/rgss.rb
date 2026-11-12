@@ -845,8 +845,24 @@ module Graphics
       RGSSRuntime.call(:set_brightness, @brightness)
     end
 
+    # Tells the page when the player has moved since the last check (twice a second), so it only asks
+    # "Leave site?" when there's progress the last save doesn't have. Loading a game sets the starting
+    # point without counting as progress.
+    def __watch_progress
+      @__progress_tick = (@__progress_tick || 0) + 1
+      return if @__progress_tick % 30 != 0
+      pos = ($game_map && $game_player) ? [$game_map.map_id, $game_player.x, $game_player.y] : nil
+      puts "[progress] #{@__progress_pos.inspect} -> #{pos.inspect}" if $__debug && pos != @__progress_pos
+      RGSSRuntime.call(:progress) if pos && @__progress_pos && pos != @__progress_pos
+      @__progress_pos = pos
+    rescue StandardError => e
+      puts "[progress] #{e.class}: #{e.message}" if $__debug
+      nil
+    end
+
     def update
       Audio.__update
+      __watch_progress
       if $__debug && $__debug_cmd && !$__debug_cmd.empty? && $__debug_cmd != "gc" && !@__in_transition && (@__dbg_frames = (@__dbg_frames || 0) + 1) > 600 && defined?(Scene_Map) && $scene.is_a?(Scene_Map) &&
          $game_temp && !$game_temp.in_menu
         cmd = $__debug_cmd

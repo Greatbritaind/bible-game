@@ -676,18 +676,22 @@ async function downloadSave(title: string) {
 // ---------------------------------------------------------------- running the game
 // ---------------------------------------------------------------- leave warning
 // While the game is running, closing or reloading the tab asks "Leave site?" so students get a chance to
-// save in the game first. Browsers only allow their own plain message here, not a custom one. It isn't
-// asked once the game has stopped (closed or crashed).
+// save in the game first. Browsers only allow their own plain message here, not a custom one.
+// It's only asked when the player has moved (to another tile or map) since the game last saved or was
+// loaded: the game thread reports movement, and a save clears it. Never asked once the game has stopped.
 const leaveGuard = (() => {
   let running = false;
+  let unsaved = false;
   window.addEventListener("beforeunload", (e) => {
-    if (!running) return;
+    if (!running || !unsaved) return;
     e.preventDefault();
     e.returnValue = ""; // older Chrome needs this to show the box
   });
   return {
     start: () => (running = true),
     stop: () => (running = false),
+    progress: () => (unsaved = true),
+    saved: () => (unsaved = false),
   };
 })();
 
@@ -900,6 +904,14 @@ function runGame(p: Prepared, existingSaves: [string, Uint8Array][]) {
         break;
       case "save":
         void saves.store(SAVE_KEY, m.path, m.data);
+        if (m.data) {
+          leaveGuard.saved();
+          if (/[?&]debug/.test(location.search)) log(`saved ${m.path}`);
+        }
+        break;
+      case "progress":
+        if (/[?&]debug/.test(location.search)) log("player moved since the last check");
+        leaveGuard.progress();
         break;
       case "speak":
         readAloud.say(m.text);
