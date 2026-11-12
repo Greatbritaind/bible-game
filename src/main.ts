@@ -674,7 +674,25 @@ async function downloadSave(title: string) {
 }
 
 // ---------------------------------------------------------------- running the game
+// ---------------------------------------------------------------- leave warning
+// While the game is running, closing or reloading the tab asks "Leave site?" so students get a chance to
+// save in the game first. Browsers only allow their own plain message here, not a custom one. It isn't
+// asked once the game has stopped (closed or crashed).
+const leaveGuard = (() => {
+  let running = false;
+  window.addEventListener("beforeunload", (e) => {
+    if (!running) return;
+    e.preventDefault();
+    e.returnValue = ""; // older Chrome needs this to show the box
+  });
+  return {
+    start: () => (running = true),
+    stop: () => (running = false),
+  };
+})();
+
 function runGame(p: Prepared, existingSaves: [string, Uint8Array][]) {
+  leaveGuard.start();
   const { shared, game, rubyModule, config, title } = p;
   const screenW = Number(config.defScreenW) || 640;
   const screenH = Number(config.defScreenH) || 480;
@@ -896,6 +914,7 @@ function runGame(p: Prepared, existingSaves: [string, Uint8Array][]) {
         log("ruby ready");
         break;
       case "ended":
+        leaveGuard.stop();
         audio.stop("bgm");
         audio.stop("bgs");
         showError("The game has closed.", "Refresh the page to play again.");
@@ -903,6 +922,7 @@ function runGame(p: Prepared, existingSaves: [string, Uint8Array][]) {
         $("error").querySelector("p")!.hidden = true;
         break;
       case "fatal":
+        leaveGuard.stop();
         console.error("GAME ERROR: " + m.message + "\n" + m.backtrace);
         showError(m.message, m.backtrace);
         break;
