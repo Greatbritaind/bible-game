@@ -13,7 +13,10 @@ begin
     RGSSRuntime.call(:loading, i + 1, $RGSS_SCRIPTS.size, section[1].to_s)
     RGSSRuntime.await(:next_frame) if i % 40 == 0
     # the last section starts the game: hook message boxes for read aloud first
-    ReadAloud.install if i == $RGSS_SCRIPTS.size - 1
+    if i == $RGSS_SCRIPTS.size - 1
+      ReadAloud.install
+      RTJAutoSave.install
+    end
     # "SectionNNN" lets Essentials' error messages show the script's name
     before = Object.private_instance_methods(false)
     eval(code, TOPLEVEL_BINDING, format("Section%03d", i))
