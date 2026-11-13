@@ -25,12 +25,12 @@ declare global {
 }
 
 let toastTimer = 0;
-function toast(message: string) {
+function toast(message: string, ms = 4000) {
   const box = $("toast");
   box.textContent = message;
   box.hidden = false;
   clearTimeout(toastTimer);
-  toastTimer = window.setTimeout(() => (box.hidden = true), 4000);
+  toastTimer = window.setTimeout(() => (box.hidden = true), ms);
 }
 
 function showError(message: string, details = "") {
@@ -697,12 +697,47 @@ const leaveGuard = (() => {
   };
 })();
 
+// Low battery: a banner over the game while the Chromebook is not plugged in and its battery is at
+// 20% or less. At 10% it turns red and the game is asked to save right away.
+function watchBattery(ctl: Int32Array) {
+  const nav = navigator as Navigator & { getBattery?: () => Promise<EventTarget & { level: number; charging: boolean }> };
+  if (!nav.getBattery) return;
+  const banner = $("battery");
+  let warned = 0; // 0 none, 20 or 10: the lowest warning already given
+  nav.getBattery().then((b) => {
+    const check = () => {
+      const pct = Math.round(b.level * 100);
+      if (b.charging || pct > 20) {
+        banner.hidden = true;
+        if (b.charging || pct > 25) warned = 0;
+        return;
+      }
+      const critical = pct <= 10;
+      banner.hidden = false;
+      banner.classList.toggle("critical", critical);
+      banner.textContent = critical
+        ? `🔋 ${pct}% battery! Plug in your Chromebook now.`
+        : `🔋 ${pct}% battery. Plug in your Chromebook!`;
+      const level = critical ? 10 : 20;
+      if (warned === 0 || level < warned) {
+        warned = level;
+        readAloud.say(critical ? "Your battery is almost empty. Plug in your Chromebook now." : "Your battery is low. Plug in your Chromebook.");
+        if (critical) Atomics.store(ctl, CTL.SAVE_NOW, 1);
+      }
+    };
+    b.addEventListener("levelchange", check);
+    b.addEventListener("chargingchange", check);
+    check();
+  }).catch(() => {});
+}
+
 function runGame(p: Prepared, existingSaves: [string, Uint8Array][]) {
   leaveGuard.start();
   const { shared, game, rubyModule, config, title } = p;
   const screenW = Number(config.defScreenW) || 640;
   const screenH = Number(config.defScreenH) || 480;
   const ctl = new Int32Array(shared.control);
+  watchBattery(ctl);
   const keysBuf = new Uint16Array(shared.keys);
   const textBuf = new Uint16Array(shared.text);
   const decodeBuf = new Uint8ClampedArray(shared.decode);
@@ -914,6 +949,9 @@ function runGame(p: Prepared, existingSaves: [string, Uint8Array][]) {
       case "progress":
         if (/[?&]debug/.test(location.search)) log("player moved since the last check");
         leaveGuard.progress();
+        break;
+      case "autosaved":
+        toast("Game saved ✔", 2000);
         break;
       case "speak":
         readAloud.say(m.text);

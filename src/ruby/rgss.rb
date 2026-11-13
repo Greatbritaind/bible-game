@@ -855,6 +855,7 @@ module Graphics
       puts "[progress] #{@__progress_pos.inspect} -> #{pos.inspect}" if $__debug && pos != @__progress_pos
       RGSSRuntime.call(:progress) if pos && @__progress_pos && pos != @__progress_pos
       @__progress_pos = pos
+      RTJAutoSave.tick(@__in_transition) if defined?(RTJAutoSave)
     rescue StandardError => e
       puts "[progress] #{e.class}: #{e.message}" if $__debug
       nil

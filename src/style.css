@@ -422,6 +422,38 @@ kbd {
   box-shadow: 4px 4px 0 var(--shadow);
 }
 
+#battery {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  z-index: 45;
+  max-width: calc(100% - 32px);
+  transform: translateX(-50%);
+  padding: 12px 18px;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--ink);
+  background: #ffe27a;
+  border: 3px solid var(--ink);
+  border-radius: 6px;
+  box-shadow: 4px 4px 0 var(--shadow);
+}
+#battery.critical {
+  color: #fff;
+  background: #c62828;
+  animation: battery-pulse 1s ease-in-out infinite alternate;
+}
+@keyframes battery-pulse {
+  to {
+    transform: translateX(-50%) scale(1.04);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  #battery.critical {
+    animation: none;
+  }
+}
+
 /* ---------- Touch buttons ---------- */
 
 #touchpad {

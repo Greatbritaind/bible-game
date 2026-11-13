@@ -16,6 +16,7 @@ export const CTL = {
   MOUSE_Y: 10,
   MOUSE_IN: 11,
   PAUSED: 12, // page sets to 1 while the tab is hidden
+  SAVE_NOW: 13, // page sets to 1 to ask the game to save as soon as it safely can (low battery)
   SIZE: 16,
 } as const;
 
@@ -64,6 +65,7 @@ export type ToPage =
   | { type: "clipboard"; text: string }
   | { type: "speak"; text: string }
   | { type: "progress" }
+  | { type: "autosaved" }
   | { type: "log"; level: "log" | "warn" | "error"; text: string };
 
 /** Message the page sends to start the game thread. */

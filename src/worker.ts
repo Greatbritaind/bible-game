@@ -3,12 +3,13 @@ import { ConsoleStdout, Directory, File, OpenFile, PreopenDirectory, WASI } from
 import { RubyVM } from "@ruby/wasm-wasi";
 import { CIMap, GameFiles } from "./gamefs";
 import { Engine } from "./engine";
-import type { StartMessage, ToPage } from "./shared";
+import { CTL, type StartMessage, type ToPage } from "./shared";
 import rgssSource from "./ruby/rgss.rb?raw";
 import bootSource from "./ruby/boot.rb?raw";
 import iteratorsSource from "./ruby/iterators.rb?raw";
 import readAloudSource from "./ruby/readaloud.rb?raw";
 import tradeSource from "./ruby/trade.rb?raw";
+import autoSaveSource from "./ruby/autosave.rb?raw";
 
 const post = (msg: ToPage, transfer: Transferable[] = []) => (self as unknown as Worker).postMessage(msg, transfer);
 
@@ -33,6 +34,7 @@ async function run(start: StartMessage) {
   (self as unknown as { __debug: boolean }).__debug = start.debug;
   const game = new GameFiles(start.shared.archive, start.shared.archiveParts);
   const engine = new Engine(game, start.shared, post);
+  const control = new Int32Array(start.shared.control);
   await engine.loadFonts();
 
   // Save files live in /save; any change is sent to the page, which keeps them in the browser
@@ -116,6 +118,8 @@ async function run(start: StartMessage) {
     speak: (text: string) => post({ type: "speak", text: String(text) }),
     progress: () => post({ type: "progress" }),
     sync_saves: () => syncSaves(),
+    autosaved: () => post({ type: "autosaved" }),
+    save_now_requested: () => Atomics.exchange(control, CTL.SAVE_NOW, 0),
     trade_available: () => (start.tradeServer ? 1 : 0),
     // Trading post requests. The game waits for the answer (a worker may make synchronous requests).
     trade: (action: string, body: string) => {
@@ -147,5 +151,5 @@ async function run(start: StartMessage) {
   const [w, h] = start.screen;
   // Synchronous: the game runs until it quits. Graphics.update sleeps between frames.
   vm.eval(iteratorsSource);
-  vm.eval(rgssSource + `\nGraphics.resize_screen(${w}, ${h})\n` + readAloudSource + "\n" + tradeSource + "\n" + bootSource);
+  vm.eval(rgssSource + `\nGraphics.resize_screen(${w}, ${h})\n` + readAloudSource + "\n" + tradeSource + "\n" + autoSaveSource + "\n" + bootSource);
 }
