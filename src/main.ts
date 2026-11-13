@@ -9,6 +9,8 @@ import { CTL, DECODE_CAPACITY, KEYS_CAPACITY, SCREEN_MAX_PIXELS, TEXT_CAPACITY, 
 import * as saves from "./saves";
 
 const SAVE_FILE = "Game.rxdata";
+/** The trade mailbox (a Cloudflare Worker). Students trade Pokémon through it with short codes. */
+const TRADE_SERVER = "https://road-to-jerusalem-trades.britaindawson10.workers.dev";
 
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 const setStatus = (t: string) => ($("status").textContent = t);
@@ -948,6 +950,9 @@ function runGame(p: Prepared, existingSaves: [string, Uint8Array][]) {
     screen: [screenW, screenH],
     title,
     debug: /[?&]debug/.test(location.search),
+    tradeServer: /[?&]debug/.test(location.search) && new URLSearchParams(location.search).get("tradeserver")
+      ? new URLSearchParams(location.search).get("tradeserver")!
+      : TRADE_SERVER,
     debugCommand: /[?&]debug/.test(location.search) ? (new URLSearchParams(location.search).get("cmd") ?? undefined) : undefined,
   };
   worker.postMessage(msg);

@@ -8,6 +8,7 @@ import rgssSource from "./ruby/rgss.rb?raw";
 import bootSource from "./ruby/boot.rb?raw";
 import iteratorsSource from "./ruby/iterators.rb?raw";
 import readAloudSource from "./ruby/readaloud.rb?raw";
+import tradeSource from "./ruby/trade.rb?raw";
 
 const post = (msg: ToPage, transfer: Transferable[] = []) => (self as unknown as Worker).postMessage(msg, transfer);
 
@@ -114,6 +115,20 @@ async function run(start: StartMessage) {
     next_frame: () => engine.waitFrame(),
     speak: (text: string) => post({ type: "speak", text: String(text) }),
     progress: () => post({ type: "progress" }),
+    sync_saves: () => syncSaves(),
+    trade_available: () => (start.tradeServer ? 1 : 0),
+    // Trading post requests. The game waits for the answer (a worker may make synchronous requests).
+    trade: (action: string, body: string) => {
+      try {
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", start.tradeServer.replace(/\/+$/, "") + "/" + action, false);
+        xhr.setRequestHeader("Content-Type", "text/plain");
+        xhr.send(body);
+        return xhr.status === 200 ? xhr.responseText : "";
+      } catch {
+        return "";
+      }
+    },
     game_ended: () => {
       syncSaves();
       post({ type: "ended" });
@@ -132,5 +147,5 @@ async function run(start: StartMessage) {
   const [w, h] = start.screen;
   // Synchronous: the game runs until it quits. Graphics.update sleeps between frames.
   vm.eval(iteratorsSource);
-  vm.eval(rgssSource + `\nGraphics.resize_screen(${w}, ${h})\n` + readAloudSource + "\n" + bootSource);
+  vm.eval(rgssSource + `\nGraphics.resize_screen(${w}, ${h})\n` + readAloudSource + "\n" + tradeSource + "\n" + bootSource);
 }

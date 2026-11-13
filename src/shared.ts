@@ -76,4 +76,6 @@ export interface StartMessage {
   debug: boolean;
   /** Test-only: Ruby code to run once the player is on a map (from ?cmd= with ?debug). */
   debugCommand?: string;
+  /** Address of the trade mailbox (see public/config.json / TRADE_SERVER). */
+  tradeServer: string;
 }
