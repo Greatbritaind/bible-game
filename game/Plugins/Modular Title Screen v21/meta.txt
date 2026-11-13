@@ -1,0 +1,4 @@
+Name       = Modular Title Screen v21
+Version    = 1.0.1
+Essentials = 21.1
+Credits    = LaceEditing, Roza, Ancurio et al., AvatarMonkeyKirby, Marin, Boushy, MiDas Mike, Brother1440, FL., PinkMan, Genzai Kawakami, Popper, help-14, Rataime, IceGod64, Savordez, SoundSpawn, Jacob O. Wobbrock, the__end, KitsuneKoutaWachunga, Lisa Anthony, Venom12, Near, Fantastica, Luka S.J.
