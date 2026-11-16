@@ -25,6 +25,9 @@ module FlyAnimation
   # Empty space under the bird in the picture is ignored automatically.
   RIDE_DROP = 4
   HOP = 14 # how high the player hops (pixels)
+  # Where the raised Poké Ball is, from the player's feet (x, y), if it can't be
+  # found in the picture. Normally it's found by its red color in the last frame.
+  BALL_SPOT = [8, -26]
 
   def self.bitmap(kind)
     ending = PICTURES[$player.character_ID] || "boy"
@@ -116,6 +119,25 @@ module FlyAnimation
     sprite.oy = h
   end
 
+  # Finds the red top of the Poké Ball in the last ball frame
+  def self.ball_spot(ball)
+    w = ball.width / BALL_FRAMES
+    left = w * (BALL_FRAMES - 1)
+    xs = []
+    ys = []
+    ball.height.times do |y|
+      w.times do |x|
+        c = ball.get_pixel(left + x, y)
+        next unless c.alpha > 0 && c.red > 190 && c.green < 130 && c.blue < 130
+        xs << x
+        ys << y
+      end
+    end
+    return BALL_SPOT if xs.empty?
+    bottom = ball.height - empty_rows(ball)
+    [(xs.sum / xs.length) - (w / 2), (ys.sum / ys.length) + 2 - bottom]
+  end
+
   def self.make_shadow
     s = new_sprite
     bmp = Bitmap.new(20, 6)
@@ -164,11 +186,9 @@ module FlyAnimation
       flyer.x = x - (x + bird.width) * ease_in(t)
       flyer.y = (y - 16) - (y + 16) * ease_in(t)
     end
-    # 3. the player turns around
+    # 3. the player lowers the ball, still facing down
     show_player_frame(player, 2)
-    wait(0.35)
-    show_player_frame(player, 8)
-    wait(0.35)
+    wait(0.45)
     # 4. hop, and the bird swoops in from the right to catch them
     shadow = make_shadow
     shadow.x = x
@@ -222,17 +242,54 @@ module FlyAnimation
       shadow.x = flyer.x
       shadow.opacity = 110 * t
     end
-    # drop the player off; the bird keeps going
+    # drop the player off; the bird glides on to the left and slows down
     player = new_sprite
     show_player_frame(player, 2)
     player.x = x
     player.y = y - HOP
     show_frame(flyer, bird, 1, 0, RIDE_DROP)
     shadow.x = x
+    turn_x = x - 70
+    turn_y = y - HOP - 24
     wait(0.5) do |t|
       player.y = (y - HOP) + (HOP * ease_in([t / 0.35, 1].min))
-      flyer.x = x - (x + bird.width) * ease_in(t)
-      flyer.y = (y - HOP) - (y * 0.5 * ease_in(t))
+      flyer.x = x - ((x - turn_x) * ease_out(t))
+      flyer.y = (y - HOP) - ((y - HOP - turn_y) * ease_out(t))
+    end
+    shadow.visible = false
+    # the player holds up the Poké Ball...
+    ball = bitmap("ball")
+    if ball
+      player.y = y
+      BALL_FRAMES.times do |i|
+        show_frame(player, ball, BALL_FRAMES, i)
+        wait(0.08)
+      end
+    end
+    # ...and the bird turns around, flies back and shrinks into it
+    flyer.mirror = true
+    spot = ball ? ball_spot(ball) : BALL_SPOT
+    ball_x = x + spot[0]
+    ball_y = y + spot[1]
+    from_x = flyer.x
+    from_y = flyer.y
+    pbSEPlay("Battle recall")
+    wait(0.55) do |t|
+      e = ease_in(t)
+      flyer.x = from_x + ((ball_x - from_x) * e)
+      flyer.y = from_y + ((ball_y - from_y) * e)
+      flyer.zoom_x = flyer.zoom_y = 1 - (0.95 * e)
+      flyer.color = Color.new(255, 255, 255, 255 * e)
+    end
+    flyer.visible = false
+    player.flash(Color.new(255, 255, 255, 200), 8)
+    wait(0.3)
+    # lower the ball
+    if ball
+      (BALL_FRAMES - 2).downto(0) do |i|
+        show_frame(player, ball, BALL_FRAMES, i)
+        wait(0.07)
+      end
     end
     finish
     $game_player.turn_down
