@@ -40,7 +40,10 @@ module FlyAnimation
     loop do
       t = [(System.uptime - start) / seconds, 1.0].min
       yield t if block_given?
-      @sprite&.update
+      if @sprite
+        pbDayNightTint(@sprite)   # same time-of-day shading as the map
+        @sprite.update
+      end
       Graphics.update
       Input.update
       pbUpdateSceneMap
@@ -58,6 +61,7 @@ module FlyAnimation
     viewport = Viewport.new(0, 0, Graphics.width, Graphics.height)
     viewport.z = 99999
     @sprite = Sprite.new(viewport)
+    pbDayNightTint(@sprite)
     [viewport, @sprite]
   end
 

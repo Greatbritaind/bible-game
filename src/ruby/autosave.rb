@@ -51,6 +51,8 @@ module RTJAutoSave
     return false if $game_temp.player_transferring
     return false if $game_temp.respond_to?(:transition_processing) && $game_temp.transition_processing
     return false if $game_player.moving? || $game_player.move_route_forcing
+    # never save while the player is hidden (cutscenes, the Fly animation), or they load invisible
+    return false if $game_player.transparent
     return false if $game_system.map_interpreter.running?
     return false if defined?(pbMapInterpreterRunning?) && pbMapInterpreterRunning?
     true
