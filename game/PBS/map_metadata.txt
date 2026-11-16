@@ -1,4 +1,4 @@
-﻿# See the documentation on the wiki to learn how to edit this file.
+# See the documentation on the wiki to learn how to edit this file.
 #-------------------------------
 [001]   # Intro
 Name = Intro
@@ -250,7 +250,7 @@ Environment = Rock
 Name = Chorazin
 Outdoor = true
 ShowArea = true
-MapPosition = 2,16,0
+MapPosition = 2,16,1
 MapSize = 0,
 #-------------------------------
 [049]   # Rock Cave 1F
@@ -454,7 +454,10 @@ Outdoor = true
 MapPosition = 2,16,4
 #-------------------------------
 [086]   # Cana
+Name = Cana
 MapPosition = 2,13,5
+Outdoor = true
+ShowArea = true
 #-------------------------------
 [087]   # Cana Wedding Venue
 MapPosition = 2,13,5

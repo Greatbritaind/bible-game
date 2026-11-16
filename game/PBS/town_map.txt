@@ -1,4 +1,4 @@
-﻿# See the documentation on the wiki to learn how to edit this file.
+# See the documentation on the wiki to learn how to edit this file.
 #-------------------------------
 [0]
 Name = Essen
@@ -38,9 +38,9 @@ Point = 13,16,Here
 [2]
 Name = Judea
 Filename = mapRegion2.png
-Point = 16,1,Chorazin
-Point = 16,3,Capernaum,Sea of Galilee
-Point = 13,5,Cana
+Point = 16,1,Chorazin,,48,24,26
+Point = 16,3,Capernaum,Sea of Galilee,42,14,14
+Point = 13,5,Cana,,86,48,18
 Point = 12,7,Nazareth
 Point = 15,8,Nain
 Point = 12,13,Jerusalem
