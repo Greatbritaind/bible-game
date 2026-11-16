@@ -55,6 +55,7 @@
         <div class="key-row"><span class="keycaps"><kbd>X</kbd><kbd>Esc</kbd></span><span>Back · hold to run</span></div>
         <div class="key-row"><span class="keycaps"><kbd>Z</kbd></span><span>Menu</span></div>
         <div class="key-row"><span class="keycaps"><kbd>🎮</kbd></span><span>Controllers work too</span></div>
+        <p class="hint">Change keys or controller buttons in the game: ☰ → Keys or Controller.</p>
       </section>
     </main>
 
@@ -70,12 +71,16 @@
       </div>
     </nav>
 
-    <div id="keys-pop" class="keys pop" hidden>
-      <div class="key-row"><span class="keycaps"><kbd>←</kbd><kbd>↑</kbd><kbd>↓</kbd><kbd>→</kbd></span><span>Walk</span></div>
-      <div class="key-row"><span class="keycaps"><kbd>C</kbd><kbd>Enter</kbd></span><span>Talk / Yes</span></div>
-      <div class="key-row"><span class="keycaps"><kbd>X</kbd><kbd>Esc</kbd></span><span>Back · hold to run</span></div>
-      <div class="key-row"><span class="keycaps"><kbd>Z</kbd></span><span>Menu</span></div>
-      <p class="hint">Save in the game menu first. Then press ⬇ to keep a copy.</p>
+    <div id="keys-pop" class="keys pop pad-pop" role="dialog" aria-label="Keyboard keys" data-ui hidden>
+      <p class="voices-title">⌨ Keyboard</p>
+      <p class="pad-help">To change a key, click it, then press the new key. Enter and Esc always work too.</p>
+      <div id="keys-list" class="pad-list"></div>
+      <p id="keys-note" class="pad-status" role="status"></p>
+      <div class="row">
+        <button id="keys-reset" class="small">Reset</button>
+        <button id="keys-done" class="small">Done</button>
+      </div>
+      <p class="hint">Save in the game menu first. Then use ⬇ Download my save to keep a copy.</p>
     </div>
 
     <div id="pad-pop" class="keys pop pad-pop" role="dialog" aria-label="Controller" data-ui hidden>

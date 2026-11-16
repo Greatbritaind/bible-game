@@ -376,6 +376,8 @@ kbd {
 .pad-list {
   display: grid;
   gap: 6px;
+  max-height: min(55vh, 460px);
+  overflow-y: auto;
 }
 .pad-row {
   display: flex;

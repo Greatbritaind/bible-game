@@ -1,6 +1,7 @@
 // The page: start screen, downloads, and everything the game thread can't do itself
 // (showing frames, keyboard and touch, sound, decoding images, keeping save files).
 import { setupController } from "./controller";
+import { setupKeymap } from "./keymap";
 import "@fontsource/atkinson-hyperlegible/400.css";
 import "@fontsource/atkinson-hyperlegible/700.css";
 import "./style.css";
@@ -856,6 +857,7 @@ function runGame(p: Prepared, existingSaves: [string, Uint8Array][]) {
     else down.delete(code);
     writeKeys();
   };
+  const keymap = setupKeymap();
   const block = new Set(["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Space", "Backspace", "Tab", "F1", "F5", "F6", "F7", "F8", "F9", "F12"]);
   window.addEventListener("keydown", (e) => {
     if ((e.target as HTMLElement)?.closest?.("[data-ui], input")) return;
@@ -866,7 +868,8 @@ function runGame(p: Prepared, existingSaves: [string, Uint8Array][]) {
       canvas.focus();
     }
     audio.unlock();
-    press(e.code, true);
+    const key = keymap.translate(e.code);
+    if (key) press(key, true);
     if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
       // Typed characters (for naming the player)
       if (Atomics.load(ctl, CTL.TEXT_READ) === Atomics.load(ctl, CTL.TEXT_LEN)) {
@@ -880,7 +883,10 @@ function runGame(p: Prepared, existingSaves: [string, Uint8Array][]) {
       }
     }
   });
-  window.addEventListener("keyup", (e) => press(e.code, false));
+  window.addEventListener("keyup", (e) => {
+    const key = keymap.translate(e.code);
+    if (key) press(key, false);
+  });
   window.addEventListener("blur", () => {
     down.clear();
     writeKeys();
@@ -925,14 +931,13 @@ function runGame(p: Prepared, existingSaves: [string, Uint8Array][]) {
       canvas.focus();
       action();
     });
-  hudClick("hud-keys", () => ($("keys-pop").hidden = !$("keys-pop").hidden));
+  hudClick("hud-keys", () => keymap.toggle());
   hudClick("hud-pad", () => controller.toggle());
   hudClick("hud-save", () => void downloadSave(title));
   hudClick("hud-full", () => {
     if (document.fullscreenElement) void document.exitFullscreen();
     else void document.documentElement.requestFullscreen().catch(() => {});
   });
-  $("keys-pop").onclick = () => ($("keys-pop").hidden = true);
   setupHudMenu();
   readAloud.setup();
   setupCrt();
