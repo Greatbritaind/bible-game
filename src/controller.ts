@@ -211,7 +211,7 @@ export function setupController(opts: {
   }
 
   window.addEventListener("gamepadconnected", (e) => {
-    toast(`🎮 ${cleanName(e.gamepad.id)} connected! Press 🎮 at the top to change its buttons.`, 5000);
+    toast(`🎮 ${cleanName(e.gamepad.id)} connected! To change its buttons, open ☰ and choose Controller.`, 5000);
     if (!pop.hidden) render();
   });
   window.addEventListener("gamepaddisconnected", () => {

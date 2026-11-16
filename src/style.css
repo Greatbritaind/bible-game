@@ -448,13 +448,46 @@ kbd {
   right: 12px;
   z-index: 20;
   display: flex;
+  flex-direction: column;
+  align-items: flex-end;
   gap: 8px;
   opacity: 0.45;
   transition: opacity 0.2s;
 }
 #hud:hover,
-#hud:focus-within {
+#hud:focus-within,
+#hud.open {
   opacity: 1;
+}
+
+/* The menu that opens from ☰ */
+.hud-items {
+  display: grid;
+  gap: 6px;
+  padding: 8px;
+  background: rgba(27, 35, 71, 0.95);
+  border: 3px solid #fff6d8;
+  border-radius: 6px;
+}
+.hud-items[hidden] {
+  display: none;
+}
+.hud-items .hud-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: auto;
+  min-width: 210px;
+  padding: 0 12px;
+  text-align: left;
+}
+.hud-items .hud-btn::after {
+  content: attr(data-label);
+  font-size: 17px;
+  font-weight: 700;
+}
+.hud-items .hud-btn:hover {
+  background: #fff;
 }
 
 .hud-btn {

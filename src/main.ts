@@ -732,6 +732,56 @@ function watchBattery(ctl: Int32Array) {
   }).catch(() => {});
 }
 
+// ☰ opens the list of buttons. It closes when you click somewhere else, after a while with no
+// clicks, or when one of its buttons opens a box of its own.
+function setupHudMenu() {
+  const hud = $("hud");
+  const menu = $("hud-menu");
+  const items = $("hud-items");
+  const STAY_OPEN = 8000;
+  let timer = 0;
+  const close = () => {
+    clearTimeout(timer);
+    items.hidden = true;
+    hud.classList.remove("open");
+    menu.setAttribute("aria-expanded", "false");
+  };
+  const keepOpen = () => {
+    clearTimeout(timer);
+    timer = window.setTimeout(close, STAY_OPEN);
+  };
+  const open = () => {
+    items.hidden = false;
+    hud.classList.add("open");
+    menu.setAttribute("aria-expanded", "true");
+    keepOpen();
+  };
+  menu.onclick = () => {
+    if (items.hidden) open();
+    else close();
+    $<HTMLCanvasElement>("screen").focus();
+  };
+  // switches stay open so you can see them change; the others close the menu
+  const toggles = new Set(["hud-read", "hud-crt"]);
+  items.addEventListener("click", (e) => {
+    const b = (e.target as HTMLElement).closest("button");
+    if (!b) return;
+    if (toggles.has(b.id)) keepOpen();
+    else close();
+  });
+  items.addEventListener("pointermove", keepOpen);
+  // right-click or long-press on read aloud opens the voice list
+  items.addEventListener("contextmenu", () => close());
+  document.addEventListener("pointerdown", (e) => {
+    if (!items.hidden && !hud.contains(e.target as Node)) close();
+  });
+  for (const id of ["voice-pop", "pad-pop", "keys-pop"]) {
+    new MutationObserver(() => {
+      if (!$(id).hidden) close();
+    }).observe($(id), { attributes: true, attributeFilter: ["hidden"] });
+  }
+}
+
 function runGame(p: Prepared, existingSaves: [string, Uint8Array][]) {
   leaveGuard.start();
   const { shared, game, rubyModule, config, title } = p;
@@ -883,6 +933,7 @@ function runGame(p: Prepared, existingSaves: [string, Uint8Array][]) {
     else void document.documentElement.requestFullscreen().catch(() => {});
   });
   $("keys-pop").onclick = () => ($("keys-pop").hidden = true);
+  setupHudMenu();
   readAloud.setup();
   setupCrt();
 
