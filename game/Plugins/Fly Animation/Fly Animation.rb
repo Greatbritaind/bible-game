@@ -25,6 +25,8 @@ module FlyAnimation
   # Empty space under the bird in the picture is ignored automatically.
   RIDE_DROP = 4
   HOP = 14 # how high the player hops (pixels)
+  # How long the whole animation takes: 1.0 = slowest, 0.5 = twice as fast
+  SPEED = 0.65
   # Where the raised Poké Ball is, from the player's feet (x, y), if it can't be
   # found in the picture. Normally it's found by its red color in the last frame.
   BALL_SPOT = [8, -26]
@@ -45,6 +47,7 @@ module FlyAnimation
 
   # Waits while the map keeps moving. The block gets how far along it is (0 to 1).
   def self.wait(seconds)
+    seconds *= SPEED
     start = System.uptime
     loop do
       t = [(System.uptime - start) / seconds, 1.0].min
