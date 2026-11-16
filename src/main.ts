@@ -256,6 +256,11 @@ const readAloud = (() => {
     say(text: string) {
       if (on) speak(text);
     },
+    /** Speaks even when read aloud is off (for "Read this" buttons). */
+    read(text: string) {
+      speechSynthesis.cancel();
+      speak(text);
+    },
   };
 })();
 
@@ -733,6 +738,79 @@ function watchBattery(ctl: Int32Array) {
   }).catch(() => {});
 }
 
+// "What to do": the player's next story goal, reminders and progress, sent by guide.rb
+interface GuideInfo {
+  goal?: string;
+  reminders?: string[];
+  badges?: number;
+  seen?: number;
+  caught?: number;
+  total?: number;
+  hasDex?: boolean;
+  place?: string;
+}
+function setupGuide() {
+  const pop = $("guide-pop");
+  const body = $("guide-body");
+  let info: GuideInfo = {};
+  const el = (tag: string, cls: string, text?: string) => {
+    const e = document.createElement(tag);
+    e.className = cls;
+    if (text !== undefined) e.textContent = text;
+    return e;
+  };
+  const spoken = () => {
+    if (!info.goal) return "Start or load your game first.";
+    const parts = [`Your goal: ${info.goal}`];
+    if (info.reminders?.length) parts.push(...info.reminders);
+    return parts.join(" ");
+  };
+  function render() {
+    body.textContent = "";
+    if (!info.goal) {
+      body.append(el("p", "guide-empty", "Start or load your game first. Then this shows what to do next."));
+      return;
+    }
+    const goal = el("div", "guide-goal");
+    goal.append(el("p", "guide-label", "📍 Your goal"), el("p", "guide-goal-text", info.goal));
+    body.append(goal);
+    if (info.reminders?.length) {
+      const box = el("div", "guide-section");
+      box.append(el("p", "guide-label", "💡 Good to know"));
+      const ul = el("ul", "guide-list");
+      for (const r of info.reminders) ul.append(el("li", "", r));
+      box.append(ul);
+      body.append(box);
+    }
+    const stats = el("div", "guide-stats");
+    if (info.place) stats.append(el("span", "guide-stat", `🗺 ${info.place}`));
+    stats.append(el("span", "guide-stat", `🏅 Badges: ${info.badges ?? 0}`));
+    if (info.hasDex && info.total) stats.append(el("span", "guide-stat", `📖 Caught ${info.caught ?? 0} of ${info.total}`));
+    body.append(stats);
+  }
+  $("guide-read").onclick = () => readAloud.read(spoken());
+  $("guide-done").onclick = () => (pop.hidden = true);
+  document.addEventListener("pointerdown", (e) => {
+    const t = e.target as HTMLElement;
+    if (pop.hidden || pop.contains(t) || t.closest?.("#hud")) return;
+    pop.hidden = true;
+  });
+  return {
+    update(json: string) {
+      try {
+        info = JSON.parse(json) as GuideInfo;
+      } catch {
+        return;
+      }
+      if (!pop.hidden) render();
+    },
+    toggle() {
+      pop.hidden = !pop.hidden;
+      if (!pop.hidden) render();
+    },
+  };
+}
+
 // ☰ opens the list of buttons. It closes when you click somewhere else, after a while with no
 // clicks, or when one of its buttons opens a box of its own.
 function setupHudMenu() {
@@ -776,7 +854,7 @@ function setupHudMenu() {
   document.addEventListener("pointerdown", (e) => {
     if (!items.hidden && !hud.contains(e.target as Node)) close();
   });
-  for (const id of ["voice-pop", "pad-pop", "keys-pop"]) {
+  for (const id of ["voice-pop", "pad-pop", "keys-pop", "guide-pop"]) {
     new MutationObserver(() => {
       if (!$(id).hidden) close();
     }).observe($(id), { attributes: true, attributeFilter: ["hidden"] });
@@ -920,6 +998,9 @@ function runGame(p: Prepared, existingSaves: [string, Uint8Array][]) {
     }
   }
 
+  // ---- "What to do" panel
+  const guide = setupGuide();
+
   // ---- game controllers
   const controller = setupController({ press, toast, onActivity: () => audio.unlock() });
   pollController = controller.poll;
@@ -933,6 +1014,7 @@ function runGame(p: Prepared, existingSaves: [string, Uint8Array][]) {
     });
   hudClick("hud-keys", () => keymap.toggle());
   hudClick("hud-pad", () => controller.toggle());
+  hudClick("hud-guide", () => guide.toggle());
   hudClick("hud-save", () => void downloadSave(title));
   hudClick("hud-full", () => {
     if (document.fullscreenElement) void document.exitFullscreen();
@@ -1013,6 +1095,9 @@ function runGame(p: Prepared, existingSaves: [string, Uint8Array][]) {
       case "progress":
         if (/[?&]debug/.test(location.search)) log("player moved since the last check");
         leaveGuard.progress();
+        break;
+      case "guide":
+        guide.update(m.json);
         break;
       case "autosaved":
         toast("Game saved ✔", 2000);

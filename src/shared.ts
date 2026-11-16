@@ -66,6 +66,7 @@ export type ToPage =
   | { type: "speak"; text: string }
   | { type: "progress" }
   | { type: "autosaved" }
+  | { type: "guide"; json: string }
   | { type: "log"; level: "log" | "warn" | "error"; text: string };
 
 /** Message the page sends to start the game thread. */

@@ -421,6 +421,67 @@ kbd {
   border-color: var(--ink);
 }
 
+/* What to do */
+.guide-pop {
+  width: min(420px, calc(100% - 24px));
+}
+.guide-body {
+  display: grid;
+  flex: 1 1 auto;
+  gap: 12px;
+  min-height: 0;
+  overflow-y: auto;
+}
+.guide-label {
+  margin: 0 0 4px;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--gold);
+}
+.guide-goal {
+  padding: 12px 14px;
+  color: var(--ink);
+  background: var(--sand);
+  border: 3px solid var(--gold);
+  border-radius: 6px;
+}
+.guide-goal .guide-label {
+  color: var(--clay);
+}
+.guide-goal-text {
+  margin: 0;
+  font-size: 21px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+.guide-list {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding-left: 22px;
+  font-size: 17px;
+  line-height: 1.4;
+}
+.guide-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.guide-stat {
+  padding: 4px 10px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+  background: #fff6d8;
+  border-radius: 5px;
+}
+.guide-empty {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.4;
+}
+
 /* Voice picker for read aloud */
 .voices-title {
   margin: 0;

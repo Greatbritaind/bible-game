@@ -10,6 +10,7 @@ import iteratorsSource from "./ruby/iterators.rb?raw";
 import readAloudSource from "./ruby/readaloud.rb?raw";
 import tradeSource from "./ruby/trade.rb?raw";
 import autoSaveSource from "./ruby/autosave.rb?raw";
+import guideSource from "./ruby/guide.rb?raw";
 
 const post = (msg: ToPage, transfer: Transferable[] = []) => (self as unknown as Worker).postMessage(msg, transfer);
 
@@ -119,6 +120,7 @@ async function run(start: StartMessage) {
     progress: () => post({ type: "progress" }),
     sync_saves: () => syncSaves(),
     autosaved: () => post({ type: "autosaved" }),
+    guide: (json: string) => post({ type: "guide", json }),
     save_now_requested: () => Atomics.exchange(control, CTL.SAVE_NOW, 0),
     trade_available: () => (start.tradeServer ? 1 : 0),
     // Trading post requests. The game waits for the answer (a worker may make synchronous requests).
@@ -151,5 +153,5 @@ async function run(start: StartMessage) {
   const [w, h] = start.screen;
   // Synchronous: the game runs until it quits. Graphics.update sleeps between frames.
   vm.eval(iteratorsSource);
-  vm.eval(rgssSource + `\nGraphics.resize_screen(${w}, ${h})\n` + readAloudSource + "\n" + tradeSource + "\n" + autoSaveSource + "\n" + bootSource);
+  vm.eval(rgssSource + `\nGraphics.resize_screen(${w}, ${h})\n` + readAloudSource + "\n" + tradeSource + "\n" + autoSaveSource + "\n" + guideSource + "\n" + bootSource);
 }

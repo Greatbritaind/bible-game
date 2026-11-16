@@ -62,6 +62,7 @@
     <nav id="hud" hidden>
       <button id="hud-menu" class="hud-btn" title="Menu" aria-label="Menu" aria-expanded="false" aria-controls="hud-items">☰</button>
       <div id="hud-items" class="hud-items" hidden>
+      <button id="hud-guide" data-label="What to do" class="hud-btn" title="What to do" aria-label="What to do">📜</button>
       <button id="hud-read" data-label="Read aloud" class="hud-btn" title="Read aloud: off. Right-click or hold to choose a voice." aria-label="Read aloud" aria-pressed="false">🔈</button>
       <button id="hud-crt" data-label="Old TV look" class="hud-btn" title="Old TV look: off" aria-label="Old TV look" aria-pressed="false">📺</button>
       <button id="hud-pad" data-label="Controller" class="hud-btn" title="Controller" aria-label="Controller settings">🎮</button>
@@ -91,6 +92,15 @@
       <div class="row">
         <button id="pad-reset" class="small">Reset</button>
         <button id="pad-done" class="small">Done</button>
+      </div>
+    </div>
+
+    <div id="guide-pop" class="keys pop pad-pop guide-pop" role="dialog" aria-label="What to do" data-ui hidden>
+      <p class="voices-title">📜 What to do</p>
+      <div id="guide-body" class="guide-body"></div>
+      <div class="row">
+        <button id="guide-read" class="small">🔊 Read this</button>
+        <button id="guide-done" class="small">Done</button>
       </div>
     </div>
 
