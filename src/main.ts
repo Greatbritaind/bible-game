@@ -1,5 +1,6 @@
 // The page: start screen, downloads, and everything the game thread can't do itself
 // (showing frames, keyboard and touch, sound, decoding images, keeping save files).
+import { setupController } from "./controller";
 import "@fontsource/atkinson-hyperlegible/400.css";
 import "@fontsource/atkinson-hyperlegible/700.css";
 import "./style.css";
@@ -765,7 +766,9 @@ function runGame(p: Prepared, existingSaves: [string, Uint8Array][]) {
   setSize(screenW, screenH);
   canvas.focus();
   let pending: { buffer: number; width: number; height: number } | null = null;
+  let pollController = () => {};
   const tick = () => {
+    pollController();
     if (pending) {
       const { buffer, width, height } = pending;
       setSize(width, height);
@@ -861,6 +864,10 @@ function runGame(p: Prepared, existingSaves: [string, Uint8Array][]) {
     }
   }
 
+  // ---- game controllers
+  const controller = setupController({ press, toast, onActivity: () => audio.unlock() });
+  pollController = controller.poll;
+
   // ---- buttons while playing
   $("hud").hidden = false;
   const hudClick = (id: string, action: () => void) =>
@@ -869,6 +876,7 @@ function runGame(p: Prepared, existingSaves: [string, Uint8Array][]) {
       action();
     });
   hudClick("hud-keys", () => ($("keys-pop").hidden = !$("keys-pop").hidden));
+  hudClick("hud-pad", () => controller.toggle());
   hudClick("hud-save", () => void downloadSave(title));
   hudClick("hud-full", () => {
     if (document.fullscreenElement) void document.exitFullscreen();

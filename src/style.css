@@ -350,6 +350,67 @@ kbd {
   background: rgba(27, 35, 71, 0.95);
 }
 
+/* Work-in-progress notice on the start card */
+.wip {
+  margin: 0 0 16px;
+  padding: 10px 12px;
+  font-size: 16px;
+  line-height: 1.4;
+  text-align: left;
+  color: var(--text);
+  background: #fff8e8;
+  border: 3px dashed var(--gold-deep);
+  border-radius: 6px;
+}
+
+/* Controller settings */
+.pad-status,
+.pad-help {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.4;
+}
+.pad-status {
+  font-weight: 700;
+}
+.pad-list {
+  display: grid;
+  gap: 6px;
+}
+.pad-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 4px 6px;
+  border-radius: 6px;
+}
+.pad-row.lit {
+  animation: pad-lit 0.6s ease-out;
+}
+@keyframes pad-lit {
+  from {
+    background: rgba(242, 179, 61, 0.7);
+  }
+}
+.pad-label {
+  font-size: 17px;
+}
+.pad-assign {
+  min-width: 140px;
+  padding: 6px 10px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+  background: #fff6d8;
+  border: 3px solid #fff6d8;
+  border-radius: 6px;
+}
+.pad-assign.waiting {
+  background: var(--gold);
+  border-color: var(--ink);
+}
+
 /* Voice picker for read aloud */
 .voices-title {
   margin: 0;
