@@ -17,8 +17,9 @@ module FlyAnimation
   RIDE_FRAMES = 2
   # Player character number (from metadata) => picture name ending
   PICTURES = { 1 => "boy", 2 => "girl" }
-  # How far below the player's feet the bottom of the bird picture sits (its shadow)
-  RIDE_DROP = 6
+  # How far below the player's feet the bottom of the bird (its shadow) sits.
+  # Empty space under the bird in the picture is ignored automatically.
+  RIDE_DROP = 4
 
   def self.bitmap(kind)
     ending = PICTURES[$player.character_ID] || "boy"
@@ -60,12 +61,25 @@ module FlyAnimation
     [viewport, @sprite]
   end
 
+  # Rows of empty space at the bottom of a picture, so the drawing (not the
+  # picture's edge) lines up with the player's feet
+  def self.empty_rows(bmp)
+    @empty_rows ||= {}
+    return @empty_rows[bmp.object_id] if @empty_rows[bmp.object_id]
+    rows = 0
+    (bmp.height - 1).downto(0) do |y|
+      break if (0...bmp.width).any? { |x| bmp.get_pixel(x, y).alpha > 0 }
+      rows += 1
+    end
+    @empty_rows[bmp.object_id] = rows
+  end
+
   def self.show_frame(sprite, bmp, frames, index, drop = 0)
     w = bmp.width / frames
     sprite.bitmap = bmp
     sprite.src_rect.set(index * w, 0, w, bmp.height)
     sprite.ox = w / 2
-    sprite.oy = bmp.height - drop
+    sprite.oy = bmp.height - empty_rows(bmp) - drop
   end
 
   def self.take_off
