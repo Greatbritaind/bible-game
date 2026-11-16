@@ -373,11 +373,19 @@ kbd {
 .pad-status {
   font-weight: 700;
 }
+/* Keys and Controller boxes: the title and the Done button always stay on screen; the list scrolls */
+.pad-pop {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - 82px);
+}
 .pad-list {
   display: grid;
+  flex: 1 1 auto;
+  min-height: 60px;
   gap: 6px;
-  max-height: min(55vh, 460px);
   overflow-y: auto;
+  overscroll-behavior: contain;
 }
 .pad-row {
   display: flex;

@@ -173,6 +173,13 @@ export function setupKeymap() {
     waitingFor = null;
     pop.hidden = true;
   };
+  // clicking anywhere outside the box (but not the ☰ menu) closes it
+  document.addEventListener("pointerdown", (e) => {
+    const t = e.target as HTMLElement;
+    if (pop.hidden || pop.contains(t) || t.closest?.("#hud")) return;
+    waitingFor = null;
+    pop.hidden = true;
+  });
 
   return {
     /** The key to send to the game for a key the player pressed, or null to ignore it. */

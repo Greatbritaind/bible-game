@@ -230,6 +230,13 @@ export function setupController(opts: {
     waitingFor = null;
     pop.hidden = true;
   };
+  // clicking anywhere outside the box (but not the ☰ menu) closes it
+  document.addEventListener("pointerdown", (e) => {
+    const t = e.target as HTMLElement;
+    if (pop.hidden || pop.contains(t) || t.closest?.("#hud")) return;
+    waitingFor = null;
+    pop.hidden = true;
+  });
 
   return {
     poll,
