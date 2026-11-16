@@ -1,0 +1,4 @@
+Name       = HM Shortcuts
+Version    = 1.0
+Essentials = 21.1
+Requires   = Following Pokemon EX
