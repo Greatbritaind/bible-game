@@ -15,7 +15,7 @@ const ACTIONS: ActionInfo[] = [
   { id: "down", label: "Walk down", key: "ArrowDown" },
   { id: "left", label: "Walk left", key: "ArrowLeft" },
   { id: "right", label: "Walk right", key: "ArrowRight" },
-  { id: "talk", label: "Talk / Yes", key: "KeyC" },
+  { id: "talk", label: "Action", key: "KeyC" },
   { id: "back", label: "Back · hold to run", key: "KeyX" },
   { id: "menu", label: "Menu", key: "KeyZ" },
   { id: "ready", label: "Quick items", key: "KeyD" },
