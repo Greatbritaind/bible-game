@@ -242,19 +242,17 @@ module FlyAnimation
       shadow.x = flyer.x
       shadow.opacity = 110 * t
     end
-    # drop the player off; the bird glides on to the left and slows down
+    # drop the player off; the bird swoops away off the screen
     player = new_sprite
     show_player_frame(player, 2)
     player.x = x
     player.y = y - HOP
     show_frame(flyer, bird, 1, 0, RIDE_DROP)
     shadow.x = x
-    turn_x = x - 70
-    turn_y = y - HOP - 24
-    wait(0.5) do |t|
+    wait(0.55) do |t|
       player.y = (y - HOP) + (HOP * ease_in([t / 0.35, 1].min))
-      flyer.x = x - ((x - turn_x) * ease_out(t))
-      flyer.y = (y - HOP) - ((y - HOP - turn_y) * ease_out(t))
+      flyer.x = x - ((x + bird.width) * ease_in(t))
+      flyer.y = (y - HOP) - (y * 0.5 * ease_in(t))
     end
     shadow.visible = false
     # the player holds up the Poké Ball...
@@ -266,20 +264,21 @@ module FlyAnimation
         wait(0.08)
       end
     end
-    # ...and the bird turns around, flies back and shrinks into it
+    # ...and the bird zips back in from off the screen, glowing white and
+    # shrinking into the ball (quick, so nobody can tell which Pokémon it is)
     flyer.mirror = true
     spot = ball ? ball_spot(ball) : BALL_SPOT
     ball_x = x + spot[0]
     ball_y = y + spot[1]
-    from_x = flyer.x
-    from_y = flyer.y
+    from_x = -bird.width / 4
+    from_y = ball_y - 60
     pbSEPlay("Battle recall")
-    wait(0.55) do |t|
-      e = ease_in(t)
+    wait(0.45) do |t|
+      e = ease_out(t)
       flyer.x = from_x + ((ball_x - from_x) * e)
       flyer.y = from_y + ((ball_y - from_y) * e)
-      flyer.zoom_x = flyer.zoom_y = 1 - (0.95 * e)
-      flyer.color = Color.new(255, 255, 255, 255 * e)
+      flyer.zoom_x = flyer.zoom_y = 0.6 - (0.57 * t)
+      flyer.color = Color.new(255, 255, 255, 170 + (85 * t))
     end
     flyer.visible = false
     player.flash(Color.new(255, 255, 255, 200), 8)
