@@ -154,7 +154,7 @@ module FlyAnimation
   def self.ease_out(t); 1 - ((1 - t)**2); end
   def self.ease_in(t); t * t; end
 
-  def self.take_off
+  def self.take_off(pkmn = nil)
     ball = bitmap("ball")
     ride = bitmap("ride")
     bird = bitmap("bird")
@@ -175,6 +175,11 @@ module FlyAnimation
       wait(0.12)
     end
     wait(0.25)
+    # the banner with the Pokémon that is using Fly (same as Surf, Cut...)
+    if pkmn
+      pbHiddenMoveAnimation(pkmn)
+      wait(0.1)
+    end
     # 2. the ball opens and the bird flies off to the upper left
     pbSEPlay("Battle recall")
     flyer = new_sprite
@@ -299,8 +304,8 @@ module FlyAnimation
   end
 end
 
-# Same as Essentials' Fly, but with the animation above in place of the
-# "Pokémon used Fly!" picture.
+# Same as Essentials' Fly, but with the animation above (which includes the
+# banner with the Pokémon using Fly).
 def pbFlyToNewLocation(pkmn = nil, move = :FLY)
   return false if $game_temp.fly_destination.nil?
   pkmn = $player.get_pokemon_with_move(move) if !pkmn
@@ -309,7 +314,7 @@ def pbFlyToNewLocation(pkmn = nil, move = :FLY)
     yield if block_given?
     return false
   end
-  animated = FlyAnimation.ready? && FlyAnimation.take_off
+  animated = FlyAnimation.ready? && FlyAnimation.take_off(pkmn)
   if !animated && (!pkmn || !pbHiddenMoveAnimation(pkmn))
     name = pkmn&.name || $player.name
     pbMessage(_INTL("{1} used {2}!", name, GameData::Move.get(move).name))
