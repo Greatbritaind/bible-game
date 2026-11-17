@@ -23079,3 +23079,27 @@ Category = King
 Pokedex = Calyrex is a merciful Pokémon, capable of providing healing and blessings. It reigned over the Galar region in times of yore.
 Generation = 8
 Flags = Legendary
+#-------------------------------------------------------------------------------------
+[LOGGIN]
+Name = Loggin
+Types = GRASS
+BaseStats = 55,55,65,30,35,50
+GenderRatio = Female50Percent
+GrowthRate = Medium
+BaseExp = 60
+EVs = DEFENSE,1
+CatchRate = 190
+Happiness = 50
+Abilities = OVERGROW
+HiddenAbilities = STURDY
+Moves = 1,TACKLE,1,HARDEN,5,ABSORB,9,LEECHSEED,13,VINEWHIP,17,SLAM,21,SYNTHESIS,25,TAKEDOWN
+EggGroups = Grass
+HatchSteps = 5120
+Height = 0.6
+Weight = 12.0
+Color = Brown
+Shape = Bipedal
+Habitat = Forest
+Category = Log
+Pokedex = It looks like a plain log. When it feels safe, it wiggles along the forest floor.
+Generation = 1

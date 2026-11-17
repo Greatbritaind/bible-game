@@ -441,8 +441,8 @@ MapPosition = 2,16,3
 [083]   # Chorazin Synagogue (Up)
 MapPosition = 2,16,1
 #-------------------------------
-[084]   # Tabor Forest
-Name = Tabor Forest
+[084]   # Arbel Forest
+Name = Arbel Forest
 Outdoor = true
 ShowArea = true
 Weather = Fog,100
