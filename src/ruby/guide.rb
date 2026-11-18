@@ -50,7 +50,7 @@ module RTJGuide
     ] },
     # ---- Main quests: not built yet ----
     { title: "The Cana Seal", type: :main, built: false, steps: [
-      { text: "Earn the Cana Seal from Master Hanan at the Seal House.", done: -> { $player.badges[0] } },
+      { text: "Earn the Cana Seal from Master Hannah at the Seal House.", done: -> { $player.badges[0] } },
     ] },
     { title: "South to Nazareth", type: :main, built: false, steps: [
       { text: "Take Route 3 south through the cave to Nazareth.", done: -> { false } },
