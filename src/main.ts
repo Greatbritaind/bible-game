@@ -281,8 +281,13 @@ async function sha256(text: string) {
   return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-/** Resolves once the right password is typed (right away when there's no password). */
-async function passwordGate(): Promise<void> {
+type PasswordCheck = (typed: string) => Promise<boolean>;
+
+/**
+ * Resolves once the right password is typed (right away when there's no password). Gives back a
+ * way to check the password again later (see setupRelock), or null when there's no password.
+ */
+async function passwordGate(): Promise<PasswordCheck | null> {
   try {
     localStorage.removeItem("passwordOk"); // older versions remembered the password
   } catch {
@@ -296,7 +301,11 @@ async function passwordGate(): Promise<void> {
   } catch {
     access = { hash: "unreachable" };
   }
-  if (!access.hash) return; // no password set
+  if (!access.hash) return null; // no password set
+  const isRight: PasswordCheck = async (text) => {
+    const typed = normalizePassword(text);
+    return !!typed && (await sha256(`${access.salt ?? ""}:${typed}`)) === access.hash;
+  };
 
   const form = $<HTMLFormElement>("password-form");
   const input = $<HTMLInputElement>("password");
@@ -316,7 +325,7 @@ async function passwordGate(): Promise<void> {
         msg.textContent = "Couldn't check the password. Check the internet and reload.";
         return;
       }
-      if ((await sha256(`${access.salt ?? ""}:${typed}`)) === access.hash) {
+      if (await isRight(typed)) {
         input.value = "";
         form.hidden = true;
         resolve();
@@ -333,6 +342,95 @@ async function passwordGate(): Promise<void> {
     $("play").addEventListener("click", () => void check());
     input.oninput = () => (msg.textContent = "");
   });
+  return isRight;
+}
+
+// After PLAY_LIMIT of play the game saves, pauses and asks for the password again, so a game left
+// open (over a weekend, say) can't be played without the teacher. The time counts from when the
+// password was last typed, including time the Chromebook was asleep or the tab was hidden.
+// ?relock=SECONDS (debug only) shortens it for testing.
+const PLAY_LIMIT_MS = 3 * 60 * 60 * 1000;
+
+function setupRelock(opts: {
+  check: PasswordCheck;
+  requestSave: () => void;
+  /** true: the game ignores keys and buttons */
+  blockInput: (on: boolean) => void;
+  /** true: the game stops (after it had a chance to save) */
+  pause: (on: boolean) => void;
+}) {
+  const debugSecs = /[?&]debug/.test(location.search) ? Number(new URLSearchParams(location.search).get("relock")) : 0;
+  const limit = debugSecs > 0 ? debugSecs * 1000 : PLAY_LIMIT_MS;
+  const box = $("relock");
+  const form = $<HTMLFormElement>("relock-form");
+  const input = $<HTMLInputElement>("relock-password");
+  const msg = $("relock-msg");
+  const saveNote = $("relock-save");
+  let unlockedAt = Date.now();
+  let locked = false;
+  let saveTimer = 0;
+
+  const lock = () => {
+    if (locked) return;
+    locked = true;
+    opts.blockInput(true);
+    input.value = "";
+    msg.textContent = "";
+    saveNote.textContent = "Saving your game…";
+    box.hidden = false;
+    input.focus();
+    readAloud.say("Time for a break. Ask your teacher for the password to keep playing.");
+    // the game keeps running a little while so it can save, then it pauses
+    opts.requestSave();
+    saveTimer = window.setTimeout(() => {
+      // couldn't save (in a battle, or auto-save is turned off): pause anyway
+      if (saveNote.textContent === "Saving your game…") saveNote.textContent = "";
+      opts.pause(true);
+    }, 20000);
+  };
+  const due = () => !locked && Date.now() - unlockedAt >= limit;
+  const checkTime = () => {
+    if (due()) lock();
+  };
+  window.setInterval(checkTime, 15000);
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) checkTime();
+  });
+  window.addEventListener("focus", checkTime);
+
+  $("relock-show").onclick = () => {
+    input.classList.toggle("masked");
+    input.focus();
+  };
+  input.oninput = () => (msg.textContent = "");
+  form.onsubmit = async (e) => {
+    e.preventDefault();
+    if (!input.value.trim()) return;
+    if (!(await opts.check(input.value))) {
+      msg.textContent = "That's not it. Ask your teacher for the password.";
+      input.select();
+      return;
+    }
+    clearTimeout(saveTimer);
+    input.value = "";
+    box.hidden = true;
+    locked = false;
+    unlockedAt = Date.now();
+    opts.pause(false);
+    opts.blockInput(false);
+    $<HTMLCanvasElement>("screen").focus();
+  };
+
+  return {
+    isLocked: () => locked,
+    /** The game saved while the lock was up */
+    saved() {
+      if (!locked) return;
+      saveNote.textContent = "Your game is saved. ✔";
+      clearTimeout(saveTimer);
+      opts.pause(true);
+    },
+  };
 }
 
 // ---------------------------------------------------------------- old TV look
@@ -861,7 +959,7 @@ function setupHudMenu() {
   }
 }
 
-function runGame(p: Prepared, existingSaves: [string, Uint8Array][]) {
+function runGame(p: Prepared, existingSaves: [string, Uint8Array][], passwordCheck: PasswordCheck | null) {
   leaveGuard.start();
   const { shared, game, rubyModule, config, title } = p;
   const screenW = Number(config.defScreenW) || 640;
@@ -913,12 +1011,34 @@ function runGame(p: Prepared, existingSaves: [string, Uint8Array][]) {
     requestAnimationFrame(tick);
   };
   requestAnimationFrame(tick);
-  document.addEventListener("visibilitychange", () => {
-    Atomics.store(ctl, CTL.PAUSED, document.hidden ? 1 : 0);
+  // the game stops while the tab is hidden, and while the 3-hour lock is up (see setupRelock)
+  let lockPaused = false;
+  let inputBlocked = false;
+  const updatePaused = () => {
+    const stop = document.hidden || lockPaused;
+    Atomics.store(ctl, CTL.PAUSED, stop ? 1 : 0);
     Atomics.notify(ctl, CTL.PAUSED);
-    if (document.hidden) void audio.ctx.suspend();
+    if (stop) void audio.ctx.suspend();
     else void audio.ctx.resume();
-  });
+  };
+  document.addEventListener("visibilitychange", updatePaused);
+  const relock = passwordCheck
+    ? setupRelock({
+        check: passwordCheck,
+        requestSave: () => Atomics.store(ctl, CTL.SAVE_NOW, 1),
+        blockInput: (on) => {
+          inputBlocked = on;
+          if (on) {
+            down.clear();
+            writeKeys();
+          }
+        },
+        pause: (on) => {
+          lockPaused = on;
+          updatePaused();
+        },
+      })
+    : null;
 
   // ---- keyboard and touch
   const down = new Set<string>();
@@ -930,6 +1050,7 @@ function runGame(p: Prepared, existingSaves: [string, Uint8Array][]) {
     Atomics.add(ctl, CTL.KEYS_SEQ, 1);
   };
   const press = (code: string, isDown: boolean) => {
+    if (isDown && inputBlocked) return;
     if (isDown === down.has(code)) return;
     if (isDown) down.add(code);
     else down.delete(code);
@@ -940,6 +1061,7 @@ function runGame(p: Prepared, existingSaves: [string, Uint8Array][]) {
   window.addEventListener("keydown", (e) => {
     if ((e.target as HTMLElement)?.closest?.("[data-ui], input")) return;
     if (block.has(e.code)) e.preventDefault();
+    if (inputBlocked) return;
     // Enter/Space on a focused page button would click it; send those keys to the game instead
     if ((e.target as HTMLElement)?.closest?.("button")) {
       e.preventDefault();
@@ -1100,7 +1222,8 @@ function runGame(p: Prepared, existingSaves: [string, Uint8Array][]) {
         guide.update(m.json);
         break;
       case "autosaved":
-        toast("Game saved ✔", 2000);
+        if (relock?.isLocked()) relock.saved();
+        else toast("Game saved ✔", 2000);
         break;
       case "speak":
         readAloud.say(m.text);
@@ -1162,8 +1285,9 @@ function showMessage(text: string) {
 async function main() {
   // students can type the password while the game downloads
   let unlocked = false;
-  const gate = passwordGate().then(() => {
+  const gate = passwordGate().then((check) => {
     unlocked = true;
+    return check;
   });
   const p = await prepare();
   document.title = p.title;
@@ -1182,7 +1306,7 @@ async function main() {
     await new Promise<void>((resolve) => play.addEventListener("click", () => resolve(), { once: true }));
   }
   $("start").hidden = true;
-  runGame(p, await saves.load(SAVE_KEY));
+  runGame(p, await saves.load(SAVE_KEY), await gate);
 }
 
 main().catch((e) => {

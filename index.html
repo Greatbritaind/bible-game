@@ -127,6 +127,22 @@
     <div id="toast" role="status" hidden></div>
     <div id="battery" role="alert" hidden></div>
 
+    <div id="relock" class="box relock" hidden data-ui>
+      <div>
+        <h2><span aria-hidden="true">⏰</span> Time for a break</h2>
+        <p>You've been playing for 3 hours. Ask your teacher for the password to keep playing.</p>
+        <p id="relock-save" class="relock-save" role="status"></p>
+        <form id="relock-form" class="password" autocomplete="off">
+          <label for="relock-password">Password</label>
+          <div class="row">
+            <input id="relock-password" class="masked" type="text" name="class-word-again" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-1p-ignore />
+            <button id="relock-show" type="button" class="small" aria-label="Show password" title="Show password">👁</button>
+          </div>
+          <p id="relock-msg" class="password-msg" role="alert"></p>
+          <button type="submit" class="big"><span class="icon" aria-hidden="true">▶</span> Keep playing</button>
+        </form>
+      </div>
+    </div>
     <div id="message" class="box" hidden data-ui>
       <div><pre id="message-text"></pre><button id="message-ok" class="small">OK</button></div>
     </div>

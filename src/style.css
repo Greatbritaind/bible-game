@@ -720,3 +720,21 @@ kbd {
   font-family: ui-monospace, monospace;
   font-size: 13px;
 }
+
+/* 3-hour lock: hides the game until the password is typed again */
+.relock {
+  z-index: 60;
+  background: rgba(10, 12, 30, 0.92);
+}
+.relock p {
+  margin: 0 0 10px;
+  font-size: 18px;
+}
+.relock .relock-save {
+  min-height: 1.4em;
+  font-weight: 700;
+}
+.relock form .big {
+  width: 100%;
+  margin-top: 6px;
+}
