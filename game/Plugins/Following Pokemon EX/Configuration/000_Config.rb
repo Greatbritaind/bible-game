@@ -59,7 +59,7 @@
   # Whether Following Pokemon slides into battle instead of being sent
   # in a Pokeball. (This doesn't affect EBDX, read the EBDX documentation to
   # change this feature in EBDX)
-  SLIDE_INTO_BATTLE         = true
+  SLIDE_INTO_BATTLE         = false
 
   # Show the Ball Opening and Closing animation when Nurse Joy takes your
   # Pokeballs at the Pokecenter.
