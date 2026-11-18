@@ -202,3 +202,18 @@ Pokemon = GOLDEEN,13
 LoseText = Good things take time. You have earned this.
 Pokemon = ODDISH,12
 Pokemon = BELLSPROUT,14
+#-------------------------------
+[SHEPHERD,Gad]
+LoseText = Hannah will not go this easy on you!
+Pokemon = HOPPIP,10
+Pokemon = SUNKERN,10
+#-------------------------------
+[WEAVER,Miriam]
+LoseText = My threads are all tangled up!
+Pokemon = PARAS,10
+Pokemon = ODDISH,11
+#-------------------------------
+[SPICETRADER,Tirzah]
+LoseText = Sweet, like ripe grapes. You may pass.
+Pokemon = BELLSPROUT,11
+Pokemon = HOPPIP,12
