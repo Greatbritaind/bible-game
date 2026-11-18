@@ -192,3 +192,8 @@ Pokemon = EKANS,11
 LoseText = Well done! These old bones need a rest.
 Pokemon = SANDSHREW,12
 Pokemon = MACHOP,13
+#-------------------------------
+[FISHERMAN,Micah]
+LoseText = My luck is as empty as my nets!
+Pokemon = POLIWAG,12
+Pokemon = GOLDEEN,13
