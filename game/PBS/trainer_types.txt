@@ -470,3 +470,10 @@ BaseMoney = 40
 Name = Zealot
 Gender = Female
 BaseMoney = 40
+#-------------------------------
+[LEADER_Hannah]
+Name = Master
+Gender = Female
+BaseMoney = 100
+BattleBGM = Battle Gym Leader
+VictoryBGM = Battle victory leader

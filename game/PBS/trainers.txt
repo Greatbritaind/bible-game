@@ -197,3 +197,8 @@ Pokemon = MACHOP,13
 LoseText = My luck is as empty as my nets!
 Pokemon = POLIWAG,12
 Pokemon = GOLDEEN,13
+#-------------------------------
+[LEADER_Hannah,Hannah]
+LoseText = Good things take time. You have earned this.
+Pokemon = ODDISH,12
+Pokemon = BELLSPROUT,14
