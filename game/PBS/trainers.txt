@@ -178,4 +178,13 @@ Pokemon = DROWZEE,13
 LoseText = My Pokémon are old, but proud.
 Pokemon = GEODUDE,12
 Pokemon = MACHOP,13
+#-------------------------------
+[ZEALOT,Ezer]
+LoseText = The Son of the Father will hear of this.
+Pokemon = MANKEY,10
+Pokemon = SANDSHREW,10
+#-------------------------------
+[ZEALOTW,Tova]
+LoseText = You fight well, for a courier.
+Pokemon = EKANS,11
 

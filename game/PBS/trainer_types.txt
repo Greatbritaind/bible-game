@@ -460,3 +460,13 @@ BaseMoney = 20
 Name = Elder
 Gender = Male
 BaseMoney = 16
+#-------------------------------
+[ZEALOT]
+Name = Zealot
+Gender = Male
+BaseMoney = 40
+#-------------------------------
+[ZEALOTW]
+Name = Zealot
+Gender = Female
+BaseMoney = 40
