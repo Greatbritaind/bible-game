@@ -23,7 +23,7 @@ module RTJGuide
       text: "Bring the water back to the wine room at the wedding." },
     { todo: -> { pbGet(28).to_i == 4 },
       text: "Bring the cup of wine to the Master of the Feast." },
-    { todo: -> { !$player.badges[0] },
+    { todo: -> { !$player.badges[2] }, # the Route 5 guards check badge #3 (index 2)
       text: "Earn the Prefect's Seal. The Roman guards on Route 5 won't let you pass without it." },
     { todo: -> { true },
       text: "You reached the end of the story so far! Catch Pokémon and fill your Pokédex while more is made." },
