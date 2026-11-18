@@ -187,4 +187,8 @@ Pokemon = SANDSHREW,10
 [ZEALOTW,Tova]
 LoseText = You fight well, for a courier.
 Pokemon = EKANS,11
-
+#-------------------------------
+[ELDER,Asher]
+LoseText = Well done! These old bones need a rest.
+Pokemon = SANDSHREW,12
+Pokemon = MACHOP,13
