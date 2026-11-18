@@ -75,6 +75,14 @@ module RTJGuide
       steps: [
         { text: "Visit the old courier's house on Route 2.", done: -> { false } },
       ] },
+    # Ezra's scroll milestones. Switch on (built: true) when Ezra has something to give at each one.
+    { title: "Write It All Down", type: :side, built: false,
+      appears: -> { $player.has_pokedex },
+      steps: [
+        { text: "Find 10 kinds of Pokémon for Ezra's scroll.", done: -> { $player.pokedex.seen_count(DEX) >= 10 } },
+        { text: "Find 25 kinds of Pokémon for Ezra's scroll.", done: -> { $player.pokedex.seen_count(DEX) >= 25 } },
+        { text: "Find 50 kinds of Pokémon for Ezra's scroll.", done: -> { $player.pokedex.seen_count(DEX) >= 50 } },
+      ] },
   ].freeze
 
   END_TEXT = "You reached the end of the story so far! Catch Pokémon while more is made."
