@@ -49,7 +49,7 @@ module RTJGuide
       { text: "Take the cup to the Master of the Feast.", done: -> { pbGet(28).to_i >= 5 } },
     ] },
     # ---- Main quests: not built yet ----
-    { title: "The Cana Seal", type: :main, built: false, steps: [
+    { title: "The Cana Seal", type: :main, built: true, steps: [
       { text: "Earn the Cana Seal from Master Hannah at the Seal House.", done: -> { $player.badges[0] } },
     ] },
     { title: "South to Nazareth", type: :main, built: false, steps: [
