@@ -332,6 +332,8 @@ Land,21
     10,NIDORANfE,3,5
     10,NIDORANmA,3,5
     10,MANKEY,4,5
+Secret,21
+    100,EEVEE,10,12
 #-------------------------------
 [084] # Arbel Forest
 Land,21
