@@ -1,33 +1,125 @@
-# "What to do" panel: works out the player's next story goal and a few helpful reminders from their
-# game, and sends them to the page every couple of seconds (only when something changed).
+# "What to do" panel: works out the player's main quest, side quests and a few helpful reminders
+# from their game, and sends them to the page every couple of seconds (only when something changed).
 #
-# STORY STEPS: in order. The first step whose `todo` is true is the goal shown to the player.
-# To add a step, add a line in the right place. Text can use {rival} and {player}.
+# QUESTS are in story order. Each quest has steps; a step's `done` is true once the player has done
+# it. The panel shows the first main quest that isn't finished, at its first unfinished step.
+# A quest with `built: false` isn't in the game yet: when the player reaches it, the panel says
+# they've reached the end of the story so far. Turn it on (built: true) once it's made.
+# Side quests show only once `appears` is true, until they're finished.
+# Text can use {rival} and {player}. Keep it short: 12 words or fewer, 6th-grade reading level.
 module RTJGuide
-  STEPS = [
-    { todo: -> { !$game_switches[61] },
-      text: "Talk to Mom downstairs in your house." },
-    { todo: -> { pbGet(7).to_i == 0 },
-      text: "Go to the synagogue in Chorazin. Ezra the old scribe is waiting for you." },
-    { todo: -> { !$player.has_pokedex && !$bag.has?(:PARCEL) },
-      text: "Go to Capernaum. Find the Pharisee who has Ezra's parcel." },
-    { todo: -> { $bag.has?(:PARCEL) },
-      text: "Bring the parcel back to Ezra at the synagogue in Chorazin." },
-    { todo: -> { !$bag.has?(:TOWNMAP) },
-      text: "Visit {rival}'s mom at their house. She has something for you." },
-    { todo: -> { pbGet(28).to_i == 0 },
-      text: "Go to Cana. There is a wedding there. Find the wine room and see if they need help." },
-    { todo: -> { pbGet(28).to_i == 1 },
-      text: "Fill the empty jug with water at the well in Cana." },
-    { todo: -> { [2, 3].include?(pbGet(28).to_i) },
-      text: "Bring the water back to the wine room at the wedding." },
-    { todo: -> { pbGet(28).to_i == 4 },
-      text: "Bring the cup of wine to the Master of the Feast." },
-    { todo: -> { !$player.badges[2] }, # the Route 5 guards check badge #3 (index 2)
-      text: "Earn the Prefect's Seal. The Roman guards on Route 5 won't let you pass without it." },
-    { todo: -> { true },
-      text: "You reached the end of the story so far! Catch Pokémon and fill your Pokédex while more is made." },
+  def self.visited?(map_id)
+    v = $PokemonGlobal.visitedMaps
+    !!(v && v[map_id])
+  end
+
+  def self.self_switch?(map_id, event_id, letter = "A")
+    $game_self_switches[[map_id, event_id, letter]] ? true : false
+  end
+
+  CHORAZIN = 48
+  CAPERNAUM = 42
+  CANA = 86
+  ARBEL_FOREST = 84
+  EZER = 9 # Arbel Forest event that battles Ezer and Tova; self switch A is on after
+
+  QUESTS = [
+    # ---- Main quests: intro through Cana ----
+    { title: "A Visit from the Scribe", type: :main, built: true, steps: [
+      { text: "Talk to Mom downstairs in your house.", done: -> { $game_switches[61] } },
+      { text: "Meet Ezra upstairs in the Chorazin synagogue.", done: -> { pbGet(7).to_i != 0 } },
+    ] },
+    { title: "The Old Scribe's Parcel", type: :main, built: true, steps: [
+      { text: "Go down Route 1 to Capernaum.", done: -> { visited?(CAPERNAUM) } },
+      { text: "Find the man in Capernaum who has Ezra's parcel.", done: -> { $bag.has?(:PARCEL) } },
+      { text: "Bring the parcel to Ezra in the Chorazin synagogue.", done: -> { $player.has_pokedex } },
+    ] },
+    { title: "A Map from Next Door", type: :main, built: true, steps: [
+      { text: "Visit {rival}'s mom at her house in Chorazin.", done: -> { $bag.has?(:TOWNMAP) } },
+    ] },
+    { title: "The Road to Cana", type: :main, built: true, steps: [
+      { text: "Take Route 2 from Capernaum toward Cana.", done: -> { visited?(ARBEL_FOREST) } },
+      { text: "Get past the Zealots at Arbel Forest's west gate.", done: -> { self_switch?(ARBEL_FOREST, EZER) } },
+      { text: "Go west into Cana.", done: -> { visited?(CANA) } },
+    ] },
+    { title: "The Wedding at Cana", type: :main, built: true, steps: [
+      { text: "Find the wine room at the wedding in Cana.", done: -> { pbGet(28).to_i >= 1 } },
+      { text: "Fill the empty jug with water at a well in Cana.", done: -> { pbGet(28).to_i >= 2 } },
+      { text: "Pour the water into the stone jars in the wine room.", done: -> { pbGet(28).to_i >= 4 } },
+      { text: "Take the cup to the Master of the Feast.", done: -> { pbGet(28).to_i >= 5 } },
+    ] },
+    # ---- Main quests: not built yet ----
+    { title: "The Cana Seal", type: :main, built: false, steps: [
+      { text: "Earn the Cana Seal from Master Hanan at the Seal House.", done: -> { $player.badges[0] } },
+    ] },
+    { title: "South to Nazareth", type: :main, built: false, steps: [
+      { text: "Take Route 3 south through the cave to Nazareth.", done: -> { false } },
+      { text: "Earn the Nazareth Seal from Master Jotham at the Seal House.", done: -> { $player.badges[1] } },
+    ] },
+    { title: "The Quiet Town", type: :main, built: false, steps: [
+      { text: "Take Route 4 east to Nain.", done: -> { false } },
+      { text: "Walk through Nain and see what is happening.", done: -> { false } },
+    ] },
+    { title: "Back to Capernaum", type: :main, built: false, steps: [
+      { text: "Take the Tabor road north, back to Capernaum.", done: -> { false } },
+      { text: "Try the Seal House in Capernaum. You have two seals now.", done: -> { false } },
+      { text: "Earn the Capernaum Seal from Master Nahum.", done: -> { $player.badges[2] } },
+    ] },
+    { title: "Onto the Water", type: :main, built: false, steps: [
+      { text: "Show your Capernaum Seal to the Roman guards on Route 5.", done: -> { false } },
+      { text: "Use Surf to go out on the Sea of Galilee.", done: -> { false } },
+    ] },
+    # ---- Side quests (none built yet) ----
+    { title: "A Letter from Father", type: :side, built: false,
+      appears: -> { false }, # first time on Route 2
+      steps: [
+        { text: "Visit the old courier's house on Route 2.", done: -> { false } },
+      ] },
   ].freeze
+
+  END_TEXT = "You reached the end of the story so far! Catch Pokémon while more is made."
+
+  # Index of the first unfinished step (steps.size when finished). A later step being done
+  # counts the earlier ones as done too, so out-of-order play still shows the right step.
+  def self.step_index(quest)
+    last = quest[:steps].rindex do |st|
+      begin
+        st[:done].call ? true : false
+      rescue StandardError
+        false
+      end
+    end
+    last ? last + 1 : 0
+  end
+
+  def self.quest_info(quest)
+    i = step_index(quest)
+    return nil if i >= quest[:steps].size
+    { "title" => quest[:title], "text" => fill(quest[:steps][i][:text]),
+      "step" => i + 1, "of" => quest[:steps].size }
+  end
+
+  # The main quest to show: the first unfinished one. nil means the end of what's built.
+  def self.main_quest
+    QUESTS.each do |q|
+      next unless q[:type] == :main
+      info = quest_info(q)
+      next unless info
+      return q[:built] ? info : nil
+    end
+    nil
+  end
+
+  def self.side_quests
+    QUESTS.select { |q| q[:type] == :side && q[:built] }.filter_map do |q|
+      shown = begin
+        q[:appears].call
+      rescue StandardError
+        false
+      end
+      shown ? quest_info(q) : nil
+    end
+  end
 
   DEX = 0 # the Judea Pokédex (first regional dex)
   @last = nil
@@ -40,15 +132,8 @@ module RTJGuide
   end
 
   def self.goal
-    STEPS.each do |s|
-      done = begin
-        !s[:todo].call
-      rescue StandardError
-        true # a step that can't be checked is skipped
-      end
-      return fill(s[:text]) unless done
-    end
-    nil
+    q = main_quest
+    q ? q["text"] : END_TEXT
   end
 
   def self.balls
@@ -94,6 +179,8 @@ module RTJGuide
     dex_total = @dex_total
     {
       "goal" => goal.to_s,
+      "quest" => main_quest,
+      "sides" => side_quests,
       "reminders" => reminders,
       "badges" => $player.badge_count,
       "seen" => ($player.pokedex.seen_count(DEX) rescue 0),

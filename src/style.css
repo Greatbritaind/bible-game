@@ -449,6 +449,38 @@ kbd {
 .guide-goal .guide-label {
   color: var(--clay);
 }
+.guide-quest-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.guide-step {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--clay);
+}
+.guide-quest-title {
+  margin: 0 0 4px;
+  font-size: 17px;
+  font-style: italic;
+}
+.guide-side {
+  margin-top: 6px;
+  padding: 8px 10px;
+  border-left: 4px solid var(--gold);
+  background: rgba(255, 255, 255, 0.06);
+}
+.guide-side-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--gold);
+}
+.guide-side-text {
+  margin: 2px 0 0;
+  font-size: 17px;
+}
 .guide-goal-text {
   margin: 0;
   font-size: 21px;

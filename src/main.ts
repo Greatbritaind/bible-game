@@ -837,8 +837,16 @@ function watchBattery(ctl: Int32Array) {
 }
 
 // "What to do": the player's next story goal, reminders and progress, sent by guide.rb
+interface QuestInfo {
+  title: string;
+  text: string;
+  step: number;
+  of: number;
+}
 interface GuideInfo {
   goal?: string;
+  quest?: QuestInfo | null;
+  sides?: QuestInfo[];
   reminders?: string[];
   badges?: number;
   seen?: number;
@@ -859,7 +867,8 @@ function setupGuide() {
   };
   const spoken = () => {
     if (!info.goal) return "Start or load your game first.";
-    const parts = [`Your goal: ${info.goal}`];
+    const parts = info.quest ? [`Main quest: ${info.quest.title}. ${info.quest.text}`] : [info.goal];
+    for (const q of info.sides ?? []) parts.push(`Side quest: ${q.title}. ${q.text}`);
     if (info.reminders?.length) parts.push(...info.reminders);
     return parts.join(" ");
   };
@@ -870,8 +879,25 @@ function setupGuide() {
       return;
     }
     const goal = el("div", "guide-goal");
-    goal.append(el("p", "guide-label", "📍 Your goal"), el("p", "guide-goal-text", info.goal));
+    if (info.quest) {
+      const head = el("div", "guide-quest-head");
+      head.append(el("p", "guide-label", "📍 Main quest"));
+      if (info.quest.of > 1) head.append(el("span", "guide-step", `Step ${info.quest.step} of ${info.quest.of}`));
+      goal.append(head, el("p", "guide-quest-title", info.quest.title), el("p", "guide-goal-text", info.quest.text));
+    } else {
+      goal.append(el("p", "guide-label", "📍 Main quest"), el("p", "guide-goal-text", info.goal));
+    }
     body.append(goal);
+    if (info.sides?.length) {
+      const box = el("div", "guide-section");
+      box.append(el("p", "guide-label", "⭐ Side quests"));
+      for (const q of info.sides) {
+        const item = el("div", "guide-side");
+        item.append(el("p", "guide-side-title", q.title), el("p", "guide-side-text", q.text));
+        box.append(item);
+      }
+      body.append(box);
+    }
     if (info.reminders?.length) {
       const box = el("div", "guide-section");
       box.append(el("p", "guide-label", "💡 Good to know"));
@@ -882,7 +908,7 @@ function setupGuide() {
     }
     const stats = el("div", "guide-stats");
     if (info.place) stats.append(el("span", "guide-stat", `🗺 ${info.place}`));
-    stats.append(el("span", "guide-stat", `🏅 Badges: ${info.badges ?? 0}`));
+    stats.append(el("span", "guide-stat", `🏅 Seals: ${info.badges ?? 0}`));
     if (info.hasDex && info.total) stats.append(el("span", "guide-stat", `📖 Caught ${info.caught ?? 0} of ${info.total}`));
     body.append(stats);
   }
