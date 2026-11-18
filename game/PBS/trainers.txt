@@ -201,7 +201,8 @@ Pokemon = GOLDEEN,13
 [LEADER_Hannah,Hannah]
 LoseText = Good things take time. You have earned this.
 Pokemon = ODDISH,12
-Pokemon = BELLSPROUT,14
+Pokemon = WEEPINBELL,14
+    Moves = VINEWHIP,WRAP,TACKLE
 #-------------------------------
 [SHEPHERD,Gad]
 LoseText = Hannah will not go this easy on you!
