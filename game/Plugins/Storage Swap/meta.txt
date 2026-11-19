@@ -1,0 +1,3 @@
+Name       = Storage Swap
+Version    = 1.0
+Essentials = 21.1
