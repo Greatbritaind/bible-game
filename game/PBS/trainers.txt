@@ -204,6 +204,31 @@ Pokemon = ODDISH,12
 Pokemon = WEEPINBELL,14
     Moves = VINEWHIP,WRAP,TACKLE
 #-------------------------------
+[STONECUTTER,Boaz]
+LoseText = Cracked like a bad stone.
+Pokemon = GEODUDE,15
+Pokemon = DIGLETT,15
+#-------------------------------
+[STONECUTTERF,Abigail]
+LoseText = I'll have to dig deeper.
+Pokemon = CUBONE,16
+#-------------------------------
+[STONECUTTER,Tobiah]
+LoseText = Even rock breaks, I guess.
+Pokemon = GEODUDE,16
+Pokemon = ONIX,17
+#-------------------------------
+[STONECUTTERF,Rhoda]
+LoseText = You've got real grit.
+Pokemon = RHYHORN,17
+Pokemon = SANDSHREW,17
+#-------------------------------
+[LEADER_Jotham,Jotham]
+LoseText = Solid work. You earned this.
+Pokemon = GEODUDE,18
+Pokemon = ONIX,19
+Pokemon = RHYHORN,21
+#-------------------------------
 [SHEPHERD,Gad]
 LoseText = Hannah will not go this easy on you!
 Pokemon = HOPPIP,10

@@ -477,3 +477,20 @@ Gender = Female
 BaseMoney = 100
 BattleBGM = Battle Gym Leader
 VictoryBGM = Battle victory leader
+#-------------------------------
+[STONECUTTER]
+Name = Stonecutter
+Gender = Male
+BaseMoney = 32
+#-------------------------------
+[STONECUTTERF]
+Name = Stonecutter
+Gender = Female
+BaseMoney = 32
+#-------------------------------
+[LEADER_Jotham]
+Name = Master
+Gender = Male
+BaseMoney = 100
+BattleBGM = Battle Gym Leader
+VictoryBGM = Battle victory leader
