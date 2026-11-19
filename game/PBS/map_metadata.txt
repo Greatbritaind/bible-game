@@ -1,4 +1,4 @@
-# See the documentation on the wiki to learn how to edit this file.
+﻿# See the documentation on the wiki to learn how to edit this file.
 #-------------------------------
 [001]   # Intro
 Name = Intro
@@ -473,3 +473,60 @@ MapPosition = 2,16,1
 #-------------------------------
 [091]   # Upper Right House
 MapPosition = 2,16,1
+#-------------------------------
+[092]   # Middle Left House (Capernaum)
+MapPosition = 2,16,3
+#-------------------------------
+[093]   # Upper Right House (Capernaum)
+MapPosition = 2,16,3
+#-------------------------------
+[094]   # Upper Left House (Capernaum)
+MapPosition = 2,16,3
+#-------------------------------
+[095]   # Pharisee's House
+MapPosition = 2,16,3
+#-------------------------------
+[096]   # Synagogue Cana (Down)
+MapPosition = 2,13,5
+#-------------------------------
+[097]   # Synagogue Cana (Up)
+MapPosition = 2,13,5
+#-------------------------------
+[098]   # Cana House 1
+MapPosition = 2,13,5
+#-------------------------------
+[099]   # Cana House 2
+MapPosition = 2,13,5
+#-------------------------------
+[100]   # Cana House 3
+MapPosition = 2,13,5
+#-------------------------------
+[101]   # Cana House 4
+MapPosition = 2,13,5
+#-------------------------------
+[102]   # Cana House 5
+MapPosition = 2,13,5
+#-------------------------------
+[103]   # Cana House 6
+MapPosition = 2,13,5
+#-------------------------------
+[104]   # Cana House 7
+MapPosition = 2,13,5
+#-------------------------------
+[105]   # Cana House 8
+MapPosition = 2,13,5
+#-------------------------------
+[106]   # Cana House 9
+MapPosition = 2,13,5
+#-------------------------------
+[107]   # Cana House 10
+MapPosition = 2,13,5
+#-------------------------------
+[108]   # Cana House 11
+MapPosition = 2,13,5
+#-------------------------------
+[109]   # Cana House 12
+MapPosition = 2,13,5
+#-------------------------------
+[110]   # Cana House 13
+MapPosition = 2,13,5
