@@ -63,6 +63,8 @@ module RTJGuide
     { title: "Back to Capernaum", type: :main, built: false, steps: [
       { text: "Take the Tabor road north, back to Capernaum.", done: -> { false } },
       { text: "Try the Seal House in Capernaum. You have two seals now.", done: -> { false } },
+      { text: "Find the guild's stolen strongbox in the Arbel Forest cave.", done: -> { false } },
+      { text: "Bring the strongbox back to Master Nahum in Capernaum.", done: -> { false } },
       { text: "Earn the Capernaum Seal from Master Nahum.", done: -> { $player.badges[2] } },
     ] },
     { title: "Onto the Water", type: :main, built: false, steps: [
