@@ -18,3 +18,22 @@ class Game_Character
     return __cutscenefix__passable?(x, y, d, strict)
   end
 end
+
+#===============================================================================
+# Old saves in Arbel Forest
+# Event 9 in Arbel Forest used to be Ruth the spice trader. Ezer the Zealot now
+# uses that event, so a save that beat Ruth counted Ezer as beaten too: Ezer
+# was missing and Tova could be walked past. Ezer and Tova are always beaten
+# together, so if Tova has not been beaten, Ezer comes back.
+#===============================================================================
+class Game_Map
+  alias __cutscenefix__update update unless method_defined?(:__cutscenefix__update)
+
+  def update
+    if @map_id == 84 && $game_self_switches[[84, 9, "A"]] && !$game_self_switches[[84, 16, "A"]]
+      $game_self_switches[[84, 9, "A"]] = false
+      @need_refresh = true
+    end
+    __cutscenefix__update
+  end
+end
