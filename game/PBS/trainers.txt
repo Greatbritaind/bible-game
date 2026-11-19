@@ -102,6 +102,34 @@ Pokemon = CHARMANDER,5
 LoseText = What?! I lost to you?
 Pokemon = SQUIRTLE,5
 #-------------------------------
+[ZEALOT,Simeon]
+LoseText = Fine. Go. But the fight is coming.
+Pokemon = MANKEY,15
+Pokemon = SANDSHREW,15
+#-------------------------------
+[ZEALOTW,Noa]
+LoseText = You fight well. Think about joining us.
+Pokemon = EKANS,14
+Pokemon = MANKEY,16
+#-------------------------------
+[RIVAL1,Blue,3]
+LoseText = You got lucky. The Zealots will see what I can do.
+Pokemon = PIDGEY,15
+Pokemon = MANKEY,14
+Pokemon = BULBASAUR,17
+#-------------------------------
+[RIVAL1,Blue,4]
+LoseText = You got lucky. The Zealots will see what I can do.
+Pokemon = PIDGEY,15
+Pokemon = MANKEY,14
+Pokemon = CHARMANDER,17
+#-------------------------------
+[RIVAL1,Blue,5]
+LoseText = You got lucky. The Zealots will see what I can do.
+Pokemon = PIDGEY,15
+Pokemon = MANKEY,14
+Pokemon = SQUIRTLE,17
+#-------------------------------
 [CHAMPION,Blue]
 LoseText = A good battle indeed!
 Pokemon = VENUSAUR,63
