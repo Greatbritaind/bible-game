@@ -488,6 +488,11 @@ Name = Stonecutter
 Gender = Female
 BaseMoney = 32
 #-------------------------------
+[APPRENTICE]
+Name = Apprentice
+Gender = Male
+BaseMoney = 24
+#-------------------------------
 [LEADER_Jotham]
 Name = Master
 Gender = Male

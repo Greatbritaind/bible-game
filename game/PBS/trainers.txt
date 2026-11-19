@@ -204,7 +204,7 @@ Pokemon = ODDISH,12
 Pokemon = WEEPINBELL,14
     Moves = VINEWHIP,WRAP,TACKLE
 #-------------------------------
-[STONECUTTER,Boaz]
+[APPRENTICE,Boaz]
 LoseText = Cracked like a bad stone.
 Pokemon = GEODUDE,15
 Pokemon = DIGLETT,15
@@ -218,7 +218,7 @@ LoseText = Even rock breaks, I guess.
 Pokemon = GEODUDE,16
 Pokemon = ONIX,17
 #-------------------------------
-[STONECUTTERF,Rhoda]
+[ELDER,Amos]
 LoseText = You've got real grit.
 Pokemon = RHYHORN,17
 Pokemon = SANDSHREW,17
