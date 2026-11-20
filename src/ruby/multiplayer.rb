@@ -588,6 +588,13 @@ module RTJMP
       pbMessage(_INTL("You said no thanks. {1} gets their Pokémon back.", partner))
       return
     end
+    # Did they stop it while we were deciding?
+    poll_inbox
+    if @trade_msgs.any? { |t| t["tid"].to_s == tid && t["k"] == "trade_state" && %w[cancel decline gone].include?(t["st"].to_s) }
+      @trade_msgs.reject! { |t| t["tid"].to_s == tid }
+      pbMessage(_INTL("{1} stopped the trade.", partner))
+      return
+    end
     packed = escrow(idx, tid, "a", partner)
     send_cmd({ "k" => "trade_confirm", "tid" => tid, "pkmn" => packed })
     wait_result(partner)
