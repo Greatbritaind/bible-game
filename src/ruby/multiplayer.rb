@@ -30,6 +30,7 @@ module RTJMP
       def passable?(*) = true
       def check_event_trigger_touch(*) = false
       def increase_steps; end
+      def pbCheckEventTriggerAfterTurning; end
 
       def update
         super
