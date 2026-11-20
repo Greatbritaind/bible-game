@@ -450,6 +450,11 @@ module RTJMP
         next if m["k"] == "trade_state" && %w[ask].include?(m["st"].to_s)
         return m
       end
+      # Both asked each other at once: the one whose ask is newer gives way and answers the other
+      if @crossed_from && tid && (j = @queue.index { |q| q["k"] == "trade_ask" && q["fromUid"].to_s == @crossed_from })
+        other = @queue.delete_at(j)
+        return { "k" => "crossed", "ask" => other } if other["tid"].to_s < tid
+      end
       return nil if can_cancel && Input.trigger?(Input::BACK)
       return { "k" => "trade_timeout" } if now - start > timeout
     end
@@ -543,7 +548,15 @@ module RTJMP
       return
     end
     tid = m["tid"].to_s
+    @crossed_from = g.uid.to_s
     m = wait_trade(_INTL("Waiting for {1}...", partner), tid: tid)
+    @crossed_from = nil
+    if m && m["k"] == "crossed"
+      # They asked us at the same moment: drop our ask and answer theirs instead
+      send_cmd({ "k" => "trade_cancel", "tid" => tid })
+      answer_trade(m["ask"])
+      return
+    end
     if m.nil? || m["k"] == "trade_timeout"
       send_cmd({ "k" => "trade_cancel", "tid" => tid })
       pbMessage(_INTL("You stopped the trade."))

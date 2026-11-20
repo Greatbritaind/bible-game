@@ -450,7 +450,7 @@ export class ClassPlay {
           const meta = (await db.get(`trades/${tid}/meta`)) as Json | null;
           if (!meta || meta.st !== "ask" || meta.b !== db.uid) continue;
           const offer = await db.get(`trades/${tid}/oa`);
-          this.send({ k: "trade_ask", tid, from: String(meta.an ?? "A classmate"), offer });
+          this.send({ k: "trade_ask", tid, from: String(meta.an ?? "A classmate"), fromUid: String(meta.a ?? ""), offer });
           this.watchTrade(db, tid, "b");
         } catch (e) {
           console.warn("class: trade request", e);
