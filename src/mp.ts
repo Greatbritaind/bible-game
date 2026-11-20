@@ -367,7 +367,12 @@ export class ClassPlay {
         case "trade_confirm": await this.tradeConfirm(db, m); break;
         case "trade_decline": await this.tradeStop(db, String(m.tid), "decline"); break;
         case "trade_cancel": await this.tradeStop(db, String(m.tid), "cancel"); break;
-        case "trade_check": this.watchTrade(db, String(m.tid), String(m.role)); break;
+        case "trade_check":
+          // start the watcher fresh so the game hears the current state again
+          this.tradeWatch.get(String(m.tid))?.();
+          this.tradeWatch.delete(String(m.tid));
+          this.watchTrade(db, String(m.tid), String(m.role));
+          break;
         case "trade_done":
           await db.set(`trades/${m.tid}/${m.role === "a" ? "da" : "db"}`, true);
           this.tradeWatch.get(String(m.tid))?.();

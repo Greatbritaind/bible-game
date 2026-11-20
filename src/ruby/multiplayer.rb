@@ -109,7 +109,7 @@ module RTJMP
     end
     update_emotes
     return if @busy
-    if !@checked_pending && pending && safe?
+    if !@checked_pending && pending && safe? && (@pending_retry_at.nil? || now > @pending_retry_at)
       @checked_pending = true
       check_pending
     end
@@ -624,6 +624,12 @@ module RTJMP
       send_cmd({ "k" => "trade_decline", "tid" => tid })
       return
     end
+    poll_inbox
+    if @trade_msgs.any? { |t| t["tid"].to_s == tid && t["k"] == "trade_state" && %w[cancel decline gone].include?(t["st"].to_s) }
+      @trade_msgs.reject! { |t| t["tid"].to_s == tid }
+      pbMessage(_INTL("{1} stopped the trade.", partner))
+      return
+    end
     packed = escrow(idx, tid, "b", partner)
     send_cmd({ "k" => "trade_offer", "tid" => tid, "pkmn" => packed, "offer" => summary(pk) })
     wait_result(partner)
@@ -649,7 +655,14 @@ module RTJMP
       else give_back
       end
     else
-      @checked_pending = false # couldn't reach the server: try again later
+      # couldn't reach the trade: try again in a while, and after a few tries take the Pokémon back
+      @pending_tries = (@pending_tries || 0) + 1
+      if @pending_tries >= 3
+        give_back(_INTL("Your trade with {1} couldn't finish, so {2} came back to you.", p["partner"], p["name"]))
+      else
+        @checked_pending = false
+        @pending_retry_at = now + 30
+      end
     end
   ensure
     @busy = false
