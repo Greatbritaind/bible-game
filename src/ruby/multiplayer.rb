@@ -264,13 +264,20 @@ module RTJMP
     case m["k"]
     when "emote" then show_emote(:me, m["e"].to_i)
     when "gift", "question" then @queue << m unless done?(m["ev"])
-    when "bonus" then @bonus_until = now + m["rem"].to_i / 1000.0
+    when "bonus"
+      @bonus_until = now + m["rem"].to_i / 1000.0
+      puts "[mp] bonus on: #{bonus?} expcharm=#{$bag.has?(:EXPCHARM) rescue $!}" if $__debug
     when "swarm"
       species = (GameData::Species.get(m["species"].to_s.upcase.to_sym).id rescue nil)
       map = m["map"].to_i
       if species && map > 0
         @swarm = { map: map, species: species, level: m["level"].to_i.clamp(2, 60), until: now + m["rem"].to_i / 1000.0, name: m["place"].to_s }
         @queue << { "k" => "swarm_note", "ev" => m["ev"], "species" => species, "place" => m["place"].to_s } unless done?("note-" + m["ev"].to_s)
+        if $__debug
+          hits = 0
+          200.times { e = [:RATTATA, 3]; swarm_species(e); hits += 1 if e[0] == species }
+          puts "[mp] swarm #{species} lv#{@swarm[:level]} on map #{map} (here #{$game_map&.map_id}): #{hits}/200 swapped"
+        end
       end
     when "trade_ask" then @queue << m
     when "trade_started", "trade_state", "trade_error" then @trade_msgs << m
