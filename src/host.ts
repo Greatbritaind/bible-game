@@ -5,7 +5,7 @@ import "@fontsource/atkinson-hyperlegible/700.css";
 import "./host.css";
 import { initializeApp } from "firebase/app";
 import { getAuth, signInAnonymously } from "firebase/auth";
-import { getDatabase, ref, get, set, remove, onValue, serverTimestamp, type Unsubscribe } from "firebase/database";
+import { getDatabase, ref, get, set, push, remove, onValue, serverTimestamp, type Unsubscribe } from "firebase/database";
 import { firebaseConfig, SESSION_MS } from "./firebase-config";
 
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -32,6 +32,7 @@ function show(c: string, expires: number) {
   try { localStorage.setItem("hostCode", c); } catch { /* ignore */ }
   $("start-box").hidden = true;
   $("live-box").hidden = false;
+  $("tools").hidden = false;
   $("code").textContent = c;
   const t = new Date(expires).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
   $("ends").textContent = `Ends at ${t}.`;
@@ -70,6 +71,7 @@ function ended(msg: string) {
   code = "";
   try { localStorage.removeItem("hostCode"); } catch { /* ignore */ }
   $("live-box").hidden = true;
+  $("tools").hidden = true;
   $("start-box").hidden = false;
   status(msg);
 }
@@ -122,9 +124,98 @@ $("end").onclick = async () => {
   if (!saved) return;
   try {
     await signIn();
-    const s = await get(ref(db, `sessions/${saved}`));
-    const v = s.val() as { host?: string; expires?: number } | null;
-    if (v && v.host === uid && Number(v.expires) > now()) show(saved, Number(v.expires));
+    const host = (await get(ref(db, `sessions/${saved}/host`))).val();
+    const expires = Number((await get(ref(db, `sessions/${saved}/expires`))).val());
+    if (host === uid && expires > now()) show(saved, expires);
     else localStorage.removeItem("hostCode");
   } catch { /* offline: stay on the start screen */ }
 })();
+
+// ---------------------------------------------------------------- announcements and events
+const flash = (id: string, text: string) => {
+  $(id).textContent = text;
+  setTimeout(() => { if ($(id).textContent === text) $(id).textContent = ""; }, 6000);
+};
+const sendEvent = async (ev: Record<string, unknown>, minutes: number, msgId: string, done: string) => {
+  if (!code) return;
+  try {
+    const r = push(ref(db, `sessions/${code}/events`));
+    await set(r, { ...ev, t: serverTimestamp(), dur: Math.round(minutes * 60000) });
+    flash(msgId, done);
+    return r.key;
+  } catch (e) {
+    console.error(e);
+    flash(msgId, "Couldn't send. Check the internet and try again.");
+    return null;
+  }
+};
+const val = (id: string) => ($(id) as HTMLInputElement | HTMLSelectElement).value;
+
+$<HTMLFormElement>("ann-form").onsubmit = async (e) => {
+  e.preventDefault();
+  const text = val("ann-text").trim();
+  if (!text || !code) return;
+  try {
+    await set(ref(db, `sessions/${code}/announce`), { id: String(Date.now()), text, save: $<HTMLInputElement>("ann-save").checked, t: serverTimestamp() });
+    $<HTMLTextAreaElement>("ann-text").value = "";
+    flash("ann-msg", "Sent ✔");
+  } catch (err) {
+    console.error(err);
+    flash("ann-msg", "Couldn't send. Check the internet and try again.");
+  }
+};
+
+$<HTMLFormElement>("gift-form").onsubmit = (e) => {
+  e.preventDefault();
+  const sel = $<HTMLSelectElement>("gift-item");
+  void sendEvent({ k: "gift", item: sel.value, qty: Number(val("gift-qty")) }, 0, "gift-msg",
+    `Sent ${val("gift-qty")} × ${sel.options[sel.selectedIndex].text} ✔`);
+};
+
+$<HTMLFormElement>("bonus-form").onsubmit = (e) => {
+  e.preventDefault();
+  const min = Number(val("bonus-min"));
+  void sendEvent({ k: "bonus" }, min, "bonus-msg", `Bonus time is on for ${min} minutes ✔`);
+};
+
+$<HTMLFormElement>("swarm-form").onsubmit = (e) => {
+  e.preventDefault();
+  const [map, place, level] = val("swarm-map").split("|");
+  const mon = $<HTMLSelectElement>("swarm-mon");
+  const min = Number(val("swarm-min"));
+  void sendEvent({ k: "swarm", species: mon.value, map: Number(map), place, level: Number(level) }, min, "swarm-msg",
+    `${mon.options[mon.selectedIndex].text} is in ${place} for ${min} minutes ✔`);
+};
+
+let stopAnswers: Unsubscribe | null = null;
+$<HTMLFormElement>("q-form").onsubmit = async (e) => {
+  e.preventDefault();
+  const q = val("q-text").trim();
+  const inputs = [...document.querySelectorAll<HTMLInputElement>(".q-choice")];
+  const right = Number((document.querySelector<HTMLInputElement>('input[name="q-right"]:checked'))?.value ?? 0);
+  const choices: string[] = [];
+  let answer = -1;
+  inputs.forEach((inp, i) => {
+    const t = inp.value.trim();
+    if (!t) return;
+    if (i === right) answer = choices.length;
+    choices.push(t);
+  });
+  if (!q || choices.length < 2) return flash("q-msg", "Write a question and at least two answers.");
+  if (answer < 0) return flash("q-msg", "Mark the right answer (the circle next to it).");
+  const key = await sendEvent({ k: "question", q, choices, answer, reward: val("q-reward") }, 5, "q-msg", "Asked ✔ Answers show below.");
+  if (!key) return;
+  stopAnswers?.();
+  const results = $("q-results");
+  stopAnswers = onValue(ref(db, `sessions/${code}/answers/${key}`), (s) => {
+    const all = Object.values((s.val() ?? {}) as Record<string, { n?: string; ok?: boolean }>);
+    const ok = all.filter((a) => a.ok).map((a) => a.n || "Player");
+    const no = all.filter((a) => !a.ok).map((a) => a.n || "Player");
+    results.replaceChildren();
+    const p1 = document.createElement("p");
+    p1.textContent = `"${q}": ${ok.length} right, ${no.length} not yet.`;
+    results.append(p1);
+    if (ok.length) { const p = document.createElement("p"); p.className = "names"; p.textContent = "✔ " + ok.join(", "); results.append(p); }
+    if (no.length) { const p = document.createElement("p"); p.className = "names"; p.textContent = "✗ " + no.join(", "); results.append(p); }
+  });
+};

@@ -2,27 +2,105 @@
   "rules": {
     "sessions": {
       "$code": {
-        ".read": "auth != null",
         ".write": "auth != null && ((!data.exists() && newData.child('host').val() === auth.uid) || (data.exists() && data.child('host').val() === auth.uid && !newData.exists()) || (data.exists() && data.child('expires').val() < now && !newData.exists()))",
         ".validate": "$code.matches(/^[0-9]{4}$/)",
-        "host": { ".validate": "newData.isString() && newData.val() === auth.uid" },
-        "created": { ".validate": "newData.isNumber()" },
-        "expires": { ".validate": "newData.isNumber() && newData.val() <= now + 10800000 + 60000" },
+        "host": {
+          ".read": "auth != null",
+          ".validate": "newData.isString() && newData.val() === auth.uid"
+        },
+        "created": {
+          ".validate": "newData.isNumber()"
+        },
+        "expires": {
+          ".read": "auth != null",
+          ".validate": "newData.isNumber() && newData.val() <= now + 10800000 + 60000"
+        },
         "who": {
+          ".read": "auth != null",
           "$uid": {
             ".write": "auth != null && auth.uid === $uid && (!newData.exists() || root.child('sessions').child($code).child('expires').val() > now)",
             ".validate": "newData.hasChildren(['n']) && newData.child('n').isString() && newData.child('n').val().length <= 20 && (!newData.child('p').exists() || (newData.child('p').isString() && newData.child('p').val().length <= 40))"
           }
         },
         "maps": {
+          ".read": "auth != null",
           "$map": {
             "$uid": {
               ".write": "auth != null && auth.uid === $uid && (!newData.exists() || root.child('sessions').child($code).child('expires').val() > now)",
-              ".validate": "$map.matches(/^[0-9]{1,4}$/) && newData.hasChildren(['n', 'x', 'y', 'd', 's']) && newData.child('n').isString() && newData.child('n').val().length <= 20 && newData.child('x').isNumber() && newData.child('y').isNumber() && newData.child('d').isNumber() && newData.child('s').isString() && newData.child('s').val().length <= 64"
+              ".validate": "$map.matches(/^[0-9]{1,4}$/) && newData.hasChildren(['n', 'x', 'y', 'd', 's']) && newData.child('n').isString() && newData.child('n').val().length <= 20 && newData.child('x').isNumber() && newData.child('y').isNumber() && newData.child('d').isNumber() && newData.child('s').isString() && newData.child('s').val().length <= 64 && (!newData.child('e').exists() || newData.child('e').isNumber()) && (!newData.child('es').exists() || newData.child('es').isNumber())"
             }
           }
         },
-        "$other": { ".validate": false }
+        "announce": {
+          ".read": "auth != null",
+          ".write": "auth != null && root.child('sessions').child($code).child('host').val() === auth.uid",
+          ".validate": "newData.hasChildren(['id', 'text']) && newData.child('text').isString() && newData.child('text').val().length <= 200"
+        },
+        "events": {
+          ".read": "auth != null",
+          "$ev": {
+            ".write": "auth != null && root.child('sessions').child($code).child('host').val() === auth.uid",
+            ".validate": "newData.hasChildren(['k', 't']) && newData.child('k').isString()"
+          }
+        },
+        "answers": {
+          ".read": "auth != null && root.child('sessions').child($code).child('host').val() === auth.uid",
+          "$ev": {
+            "$uid": {
+              ".read": "auth != null && auth.uid === $uid",
+              ".write": "auth != null && auth.uid === $uid && root.child('sessions').child($code).child('expires').val() > now",
+              ".validate": "newData.hasChildren(['ok']) && newData.child('ok').isBoolean()"
+            }
+          }
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    },
+    "trades": {
+      "$tid": {
+        ".write": "auth != null && !data.exists() && newData.child('meta/a').val() === auth.uid && newData.child('meta/st').val() === 'ask' && newData.child('meta/b').isString()",
+        "meta": {
+          ".read": "auth != null && (data.child('a').val() === auth.uid || data.child('b').val() === auth.uid)",
+          "st": {
+            ".write": "auth != null && (auth.uid === root.child('trades').child($tid).child('meta/a').val() || auth.uid === root.child('trades').child($tid).child('meta/b').val())",
+            ".validate": "newData.isString() && ((data.val() === 'ask' && newData.val() === 'offered' && auth.uid === root.child('trades').child($tid).child('meta/b').val() && root.child('trades').child($tid).child('pb').exists()) || (data.val() === 'offered' && newData.val() === 'swap' && auth.uid === root.child('trades').child($tid).child('meta/a').val() && root.child('trades').child($tid).child('pa').exists()) || (data.val() === 'ask' && newData.val() === 'decline' && auth.uid === root.child('trades').child($tid).child('meta/b').val()) || ((data.val() === 'ask' || data.val() === 'offered') && newData.val() === 'cancel') || !data.exists())"
+          }
+        },
+        "oa": {
+          ".read": "auth != null && (auth.uid === root.child('trades').child($tid).child('meta/a').val() || auth.uid === root.child('trades').child($tid).child('meta/b').val())"
+        },
+        "ob": {
+          ".read": "auth != null && (auth.uid === root.child('trades').child($tid).child('meta/a').val() || auth.uid === root.child('trades').child($tid).child('meta/b').val())",
+          ".write": "auth != null && auth.uid === root.child('trades').child($tid).child('meta/b').val() && !data.exists() && root.child('trades').child($tid).child('meta/st').val() === 'ask'"
+        },
+        "pa": {
+          ".read": "auth != null && (auth.uid === root.child('trades').child($tid).child('meta/a').val() || (auth.uid === root.child('trades').child($tid).child('meta/b').val() && root.child('trades').child($tid).child('meta/st').val() === 'swap'))",
+          ".write": "auth != null && auth.uid === root.child('trades').child($tid).child('meta/a').val() && !data.exists() && root.child('trades').child($tid).child('meta/st').val() === 'offered'",
+          ".validate": "newData.isString() && newData.val().length <= 20000"
+        },
+        "pb": {
+          ".read": "auth != null && (auth.uid === root.child('trades').child($tid).child('meta/b').val() || (auth.uid === root.child('trades').child($tid).child('meta/a').val() && root.child('trades').child($tid).child('meta/st').val() === 'swap'))",
+          ".write": "auth != null && auth.uid === root.child('trades').child($tid).child('meta/b').val() && !data.exists() && root.child('trades').child($tid).child('meta/st').val() === 'ask'",
+          ".validate": "newData.isString() && newData.val().length <= 20000"
+        },
+        "da": {
+          ".write": "auth != null && auth.uid === root.child('trades').child($tid).child('meta/a').val()",
+          ".validate": "newData.isBoolean()"
+        },
+        "db": {
+          ".write": "auth != null && auth.uid === root.child('trades').child($tid).child('meta/b').val()",
+          ".validate": "newData.isBoolean()"
+        }
+      }
+    },
+    "inbox": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        "$tid": {
+          ".write": "auth != null && ((auth.uid === $uid && !newData.exists()) || (newData.exists() && root.child('trades').child($tid).child('meta/a').val() === auth.uid && root.child('trades').child($tid).child('meta/b').val() === $uid))"
+        }
       }
     }
   }

@@ -979,7 +979,7 @@ function setupHudMenu() {
   document.addEventListener("pointerdown", (e) => {
     if (!items.hidden && !hud.contains(e.target as Node)) close();
   });
-  for (const id of ["voice-pop", "pad-pop", "keys-pop", "guide-pop", "class-pop"]) {
+  for (const id of ["voice-pop", "pad-pop", "keys-pop", "guide-pop", "class-pop", "emote-pop"]) {
     new MutationObserver(() => {
       if (!$(id).hidden) close();
     }).observe($(id), { attributes: true, attributeFilter: ["hidden"] });
@@ -1164,8 +1164,9 @@ function runGame(p: Prepared, existingSaves: [string, Uint8Array][], passwordChe
   hudClick("hud-keys", () => keymap.toggle());
   hudClick("hud-pad", () => controller.toggle());
   hudClick("hud-guide", () => guide.toggle());
-  const classPlay = setupClass(shared, toast, /[?&]debug/.test(location.search) && /[?&]mptest/.test(location.search));
+  const classPlay = setupClass(shared, toast, { say: (t) => readAloud.say(t), read: (t) => readAloud.read(t) }, /[?&]debug/.test(location.search) && /[?&]mptest/.test(location.search));
   hudClick("hud-class", () => classPlay.toggle());
+  hudClick("hud-emote", () => classPlay.toggleEmotes());
   hudClick("hud-save", () => void downloadSave(title));
   hudClick("hud-full", () => {
     if (document.fullscreenElement) void document.exitFullscreen();
@@ -1252,6 +1253,9 @@ function runGame(p: Prepared, existingSaves: [string, Uint8Array][], passwordChe
         break;
       case "mp":
         classPlay.play.gameState(m.state);
+        break;
+      case "mpcmd":
+        void classPlay.play.gameCommand(m.json);
         break;
       case "autosaved":
         if (relock?.isLocked()) relock.saved();

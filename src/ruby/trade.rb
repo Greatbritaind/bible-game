@@ -158,10 +158,15 @@ module RTJTrade
     end
     check_my_trades
     loop do
+      # Sending one-way gifts is turned off: trades are fair two-way swaps now, made face to face in a
+      # class session (walk up to a classmate and press the action button). Codes already sent can
+      # still be picked up or taken back here.
       cmd = pbMessage(_INTL("Welcome to the trading post! What would you like to do?"),
-                      [_INTL("Send a Pokémon"), _INTL("Get a Pokémon"), _INTL("My trade codes"), _INTL("Leave")], 4)
+                      [_INTL("How to trade"), _INTL("Get a Pokémon"), _INTL("My trade codes"), _INTL("Leave")], 4)
       case cmd
-      when 0 then send_pokemon
+      when 0
+        pbMessage(_INTL("Trades are fair swaps now. You give one Pokémon and get one back."))
+        pbMessage(_INTL("Join your class, then walk up to a classmate and press the action button."))
       when 1 then receive_pokemon
       when 2 then my_trades
       else break

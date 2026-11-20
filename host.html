@@ -26,6 +26,91 @@
         <button id="end" class="end">End session</button>
       </section>
 
+      <section id="tools" class="tools" hidden>
+        <h2>📣 Announcement</h2>
+        <form id="ann-form" class="tool">
+          <textarea id="ann-text" maxlength="200" rows="2" placeholder="Save your game! Class ends in 5 minutes."></textarea>
+          <label class="check"><input id="ann-save" type="checkbox" checked /> Also save everyone's game</label>
+          <button type="submit">Send to everyone</button>
+          <p id="ann-msg" class="tool-msg" role="status"></p>
+        </form>
+
+        <h2>🎁 Gift for everyone</h2>
+        <form id="gift-form" class="tool row-tool">
+          <select id="gift-item">
+            <option value="POTION">Potion</option>
+            <option value="SUPERPOTION">Super Potion</option>
+            <option value="POKEBALL">Poké Ball</option>
+            <option value="GREATBALL">Great Ball</option>
+            <option value="ANTIDOTE">Antidote</option>
+            <option value="AWAKENING">Awakening</option>
+            <option value="REPEL">Repel</option>
+            <option value="ESCAPEROPE">Escape Rope</option>
+            <option value="RARECANDY">Rare Candy</option>
+          </select>
+          <select id="gift-qty"><option>1</option><option>2</option><option selected>3</option><option>5</option></select>
+          <button type="submit">Send gift</button>
+          <p id="gift-msg" class="tool-msg" role="status"></p>
+        </form>
+
+        <h2>⭐ Bonus time</h2>
+        <form id="bonus-form" class="tool row-tool">
+          <span>Double prize money and more EXP for</span>
+          <select id="bonus-min"><option value="10">10 minutes</option><option value="15" selected>15 minutes</option><option value="20">20 minutes</option><option value="30">30 minutes</option></select>
+          <button type="submit">Start bonus</button>
+          <p id="bonus-msg" class="tool-msg" role="status"></p>
+        </form>
+
+        <h2>🌿 Rare Pokémon swarm</h2>
+        <form id="swarm-form" class="tool row-tool">
+          <select id="swarm-mon">
+            <option value="PIKACHU">Pikachu</option>
+            <option value="CLEFAIRY">Clefairy</option>
+            <option value="VULPIX">Vulpix</option>
+            <option value="GROWLITHE">Growlithe</option>
+            <option value="ABRA">Abra</option>
+            <option value="JIGGLYPUFF">Jigglypuff</option>
+            <option value="PONYTA">Ponyta</option>
+            <option value="PSYDUCK">Psyduck</option>
+            <option value="BULBASAUR">Bulbasaur</option>
+            <option value="CHARMANDER">Charmander</option>
+            <option value="SQUIRTLE">Squirtle</option>
+            <option value="DRATINI">Dratini</option>
+            <option value="CHANSEY">Chansey</option>
+            <option value="SCYTHER">Scyther</option>
+          </select>
+          <span>in</span>
+          <select id="swarm-map">
+            <option value="78|Route 1|4">Route 1</option>
+            <option value="85|Route 2|6" selected>Route 2</option>
+            <option value="84|Arbel Forest|7">Arbel Forest</option>
+            <option value="43|Route 5|12">Route 5</option>
+          </select>
+          <span>for</span>
+          <select id="swarm-min"><option value="10">10 min</option><option value="15" selected>15 min</option><option value="20">20 min</option></select>
+          <button type="submit">Start swarm</button>
+          <p id="swarm-msg" class="tool-msg" role="status"></p>
+        </form>
+
+        <h2>📜 Bible question</h2>
+        <form id="q-form" class="tool">
+          <input id="q-text" maxlength="120" placeholder="Who turned water into wine at the wedding in Cana?" />
+          <div class="choices">
+            <label><input type="radio" name="q-right" value="0" checked /><input class="q-choice" maxlength="40" placeholder="Answer 1 (mark the right one)" /></label>
+            <label><input type="radio" name="q-right" value="1" /><input class="q-choice" maxlength="40" placeholder="Answer 2" /></label>
+            <label><input type="radio" name="q-right" value="2" /><input class="q-choice" maxlength="40" placeholder="Answer 3 (optional)" /></label>
+            <label><input type="radio" name="q-right" value="3" /><input class="q-choice" maxlength="40" placeholder="Answer 4 (optional)" /></label>
+          </div>
+          <div class="row-tool">
+            <span>Prize for a right answer:</span>
+            <select id="q-reward"><option value="POTION">Potion</option><option value="POKEBALL" selected>Poké Ball</option><option value="SUPERPOTION">Super Potion</option><option value="GREATBALL">Great Ball</option><option value="RARECANDY">Rare Candy</option></select>
+            <button type="submit">Ask everyone</button>
+          </div>
+          <p id="q-msg" class="tool-msg" role="status"></p>
+          <div id="q-results" class="q-results"></div>
+        </form>
+      </section>
+
       <p id="status" class="status" role="status"></p>
     </main>
     <script type="module" src="./src/host.ts"></script>

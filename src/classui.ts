@@ -1,21 +1,23 @@
 // ☰ → Class: join the class session your teacher started (a 4-digit code), or leave it.
+// Also the 😄 emote picker and the teacher's announcements.
 import { ClassPlay } from "./mp";
 import type { SharedBuffers } from "./shared";
 
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 
-export function setupClass(shared: SharedBuffers, toast: (m: string, ms?: number) => void, test: boolean) {
+export function setupClass(shared: SharedBuffers, toast: (m: string, ms?: number) => void, voice: { say: (t: string) => void; read: (t: string) => void }, test: boolean) {
   const play = new ClassPlay(shared, test);
   const pop = $("class-pop");
   const form = $<HTMLFormElement>("class-form");
   const input = $<HTMLInputElement>("class-code");
   const msg = $("class-msg");
-  const inBox = $("class-in");
-  const outBox = $("class-out");
   const btn = $("hud-class");
+  const emoteBtn = $("hud-emote");
+  const emotePop = $("emote-pop");
+  const focusGame = () => $<HTMLCanvasElement>("screen").focus();
   const render = () => {
-    inBox.hidden = !play.joined;
-    outBox.hidden = play.joined;
+    $("class-in").hidden = !play.joined;
+    $("class-out").hidden = play.joined;
     if (play.joined) {
       $("class-which").textContent = play.classCode;
       $("class-here").textContent = play.here === 0 ? "No classmates on this map right now."
@@ -23,9 +25,25 @@ export function setupClass(shared: SharedBuffers, toast: (m: string, ms?: number
     }
     btn.setAttribute("data-label", play.joined ? `Class ${play.classCode}` : "Join class");
     btn.classList.toggle("on", play.joined);
+    emoteBtn.hidden = !play.joined;
+    if (!play.joined) emotePop.hidden = true;
   };
   play.onChange = render;
   play.onEnded = () => toast("The class session ended.", 4000);
+
+  // teacher announcements
+  const box = $("announce");
+  let annText = "";
+  play.onAnnounce = (a) => {
+    annText = a.text;
+    $("announce-text").textContent = a.text;
+    $("announce-save").hidden = !a.save;
+    box.hidden = false;
+    voice.say("Message from your teacher. " + a.text);
+  };
+  $("announce-ok").onclick = () => { box.hidden = true; focusGame(); };
+  $("announce-read").onclick = () => voice.read(annText);
+
   form.onsubmit = async (e) => {
     e.preventDefault();
     msg.textContent = "Joining…";
@@ -35,17 +53,21 @@ export function setupClass(shared: SharedBuffers, toast: (m: string, ms?: number
       input.value = "";
       toast(`You joined class ${play.classCode}! 👥`, 3000);
       pop.hidden = true;
-      $<HTMLCanvasElement>("screen").focus();
+      focusGame();
     } else if (r === "nocode") msg.textContent = "No class with that code. Check the code and try again.";
     else msg.textContent = "Couldn't reach the class server. Check the internet and try again.";
   };
   input.addEventListener("input", () => (input.value = input.value.replace(/\D/g, "").slice(0, 4)));
-  $("class-leave").onclick = () => {
-    play.leave();
-    toast("You left the class.", 2500);
-  };
+  $("class-leave").onclick = () => { play.leave(); toast("You left the class.", 2500); };
   $("class-done").onclick = () => (pop.hidden = true);
   $("class-done2").onclick = () => (pop.hidden = true);
+
+  // emotes
+  for (const b of emotePop.querySelectorAll<HTMLButtonElement>(".emote-btn")) {
+    b.onclick = () => { play.emote(Number(b.dataset.e)); emotePop.hidden = true; focusGame(); };
+  }
+  $("emote-done").onclick = () => { emotePop.hidden = true; focusGame(); };
+
   render();
   // Rejoin after a reload (the code is kept for 3 hours)
   const saved = play.savedCode();
@@ -58,5 +80,6 @@ export function setupClass(shared: SharedBuffers, toast: (m: string, ms?: number
       render();
       if (!pop.hidden && !play.joined) setTimeout(() => input.focus(), 50);
     },
+    toggleEmotes() { emotePop.hidden = !emotePop.hidden; },
   };
 }

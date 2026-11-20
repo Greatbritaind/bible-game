@@ -3,7 +3,7 @@ import { ConsoleStdout, Directory, File, OpenFile, PreopenDirectory, WASI } from
 import { RubyVM } from "@ruby/wasm-wasi";
 import { CIMap, GameFiles } from "./gamefs";
 import { Engine } from "./engine";
-import { CTL, MP_CAPACITY, type StartMessage, type ToPage } from "./shared";
+import { CTL, MP_CAPACITY, MPI_CAPACITY, type StartMessage, type ToPage } from "./shared";
 import rgssSource from "./ruby/rgss.rb?raw";
 import bootSource from "./ruby/boot.rb?raw";
 import iteratorsSource from "./ruby/iterators.rb?raw";
@@ -38,7 +38,14 @@ async function run(start: StartMessage) {
   const engine = new Engine(game, start.shared, post);
   const control = new Int32Array(start.shared.control);
   const mpBuf = new Uint16Array(start.shared.mp);
+  const mpiBuf = new Uint16Array(start.shared.mpi);
   let mpSeen = -1;
+  let mpiSeen = -1;
+  const readText = (buf: Uint16Array, n: number) => {
+    let s = "";
+    for (let i = 0; i < n; i += 4096) s += String.fromCharCode(...buf.subarray(i, Math.min(n, i + 4096)));
+    return s;
+  };
   await engine.loadFonts();
 
   // Save files live in /save; any change is sent to the page, which keeps them in the browser
@@ -133,11 +140,16 @@ async function run(start: StartMessage) {
       const seq = Atomics.load(control, CTL.MP_SEQ);
       if (seq === mpSeen) return "~"; // nothing new
       mpSeen = seq;
-      const n = Math.min(Atomics.load(control, CTL.MP_LEN), MP_CAPACITY);
-      let s = "";
-      for (let i = 0; i < n; i += 4096) s += String.fromCharCode(...mpBuf.subarray(i, Math.min(n, i + 4096)));
-      return s;
+      return readText(mpBuf, Math.min(Atomics.load(control, CTL.MP_LEN), MP_CAPACITY));
     },
+    // Class inbox: teacher events, trade steps, emotes (JSON lines). "~" when nothing changed.
+    mp_inbox: () => {
+      const seq = Atomics.load(control, CTL.MPI_SEQ);
+      if (seq === mpiSeen) return "~";
+      mpiSeen = seq;
+      return readText(mpiBuf, Math.min(Atomics.load(control, CTL.MPI_LEN), MPI_CAPACITY));
+    },
+    mp_cmd: (json: string) => post({ type: "mpcmd", json: String(json) }),
     trade_available: () => (start.tradeServer ? 1 : 0),
     // Trading post requests. The game waits for the answer (a worker may make synchronous requests).
     trade: (action: string, body: string) => {

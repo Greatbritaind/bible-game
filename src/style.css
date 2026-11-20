@@ -776,3 +776,12 @@ kbd {
 .class-code { font: inherit; font-size: 28px; letter-spacing: 0.3em; width: 6.2em; text-align: center; padding: 6px 8px; border-radius: 8px; border: 2px solid #8a7a5a; }
 .class-big { font-size: 26px; font-weight: 700; margin: 4px 0 8px; }
 .hud-btn.on { outline: 2px solid #5fbf6a; }
+
+/* Emotes and teacher announcements (class sessions) */
+.emote-row { display: flex; gap: 8px; justify-content: center; margin: 8px 0 12px; }
+.emote-btn { font-size: 30px; width: 56px; height: 56px; border-radius: 12px; padding: 0; line-height: 1; }
+.announce { position: fixed; left: 50%; top: 16px; transform: translateX(-50%); z-index: 60; width: min(560px, calc(100vw - 32px));
+  background: #fff8e6; color: #2b2418; border: 3px solid #8a4b1c; border-radius: 14px; padding: 14px 18px; box-shadow: 0 8px 30px rgba(0,0,0,.45); }
+.announce-title { margin: 0 0 6px; font-weight: 700; font-size: 18px; color: #8a4b1c; }
+.announce-text { margin: 0 0 10px; font-size: 22px; line-height: 1.35; white-space: pre-wrap; overflow-wrap: anywhere; }
+.announce-save { margin: 0 0 10px; font-size: 16px; }
