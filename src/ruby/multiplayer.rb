@@ -678,7 +678,7 @@ module RTJMP
   # summary of the team (so classmates can battle a copy of it). Sent only when it changes.
   def self.profile
     team = $player.party.reject(&:egg?).first(6).map do |pk|
-      stats = GameData::Stat.each_main.map(&:id)
+      stats = main_stats
       { "s" => pk.species.to_s, "f" => pk.form.to_i, "l" => pk.level, "g" => pk.gender,
         "n" => pk.name.to_s[0, 12], "m" => pk.moves.map { |mv| mv.id.to_s },
         "a" => pk.ability_id.to_s, "i" => pk.item_id.to_s, "nt" => pk.nature_id.to_s,
@@ -688,6 +688,14 @@ module RTJMP
     { "k" => "profile", "b" => $player.badge_count, "dx" => $player.pokedex.owned_count,
       "lv" => ($player.party.reject(&:egg?).map(&:level).max || 0),
       "tt" => $player.trainer_type.to_s, "team" => team }
+  end
+
+  def self.main_stats
+    @main_stats ||= begin
+      ids = []
+      GameData::Stat.each_main { |st| ids << st.id }
+      ids
+    end
   end
 
   def self.share_profile
@@ -721,7 +729,7 @@ module RTJMP
       pk.forget_all_moves
       moves.each { |mv| pk.learn_move(mv) }
     end
-    stats = GameData::Stat.each_main.map(&:id)
+    stats = main_stats
     stats.each_with_index do |st, idx|
       pk.iv[st] = Array(h["iv"])[idx].to_i.clamp(0, Pokemon::IV_STAT_LIMIT) if h["iv"]
       pk.ev[st] = Array(h["ev"])[idx].to_i.clamp(0, Pokemon::EV_STAT_LIMIT) if h["ev"]
