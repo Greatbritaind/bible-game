@@ -776,7 +776,7 @@ module RTJMP
     $player.money = money unless won
     $player.heal_party
     @beaten[g.uid] = true if won
-    puts "[mp] battle vs #{partner}: outcome=#{outcome}" if $__debug
+    puts "[mp] battle vs #{partner}: outcome=#{outcome} money #{money}->#{$player.money} hp=#{$player.party.map(&:hp).join(",")} map=#{$game_map.map_id}" if $__debug
     if won
       pbMessage(_INTL("You beat {1}'s team! Your Pokémon are rested.", partner))
     else
