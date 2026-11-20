@@ -437,7 +437,7 @@ module RTJMP
   # Waits for a trade step. Returns the message, or nil if the player gave up (only when allowed).
   def self.wait_trade(text, tid: nil, ref: nil, can_cancel: true, timeout: 180)
     win = pbCreateMessageWindow
-    pbMessageDisplay(win, text + (can_cancel ? "\n" + _INTL("(Press Back to stop waiting.)") : "") + "\\wtnp[0]")
+    pbMessageDisplay(win, text + (can_cancel ? "\n" + _INTL("Press Back to stop.") : "") + "\\wtnp[0]")
     start = now
     loop do
       Graphics.update
@@ -472,6 +472,7 @@ module RTJMP
     p = pending
     return unless p
     pkmn = RTJTrade.unpack(p["mine"])
+    puts "[mp] trade called off: #{pkmn&.name} back" if $__debug
     set_pending(nil)
     if pkmn
       RTJTrade.store(pkmn)
@@ -494,6 +495,7 @@ module RTJMP
     RTJTrade.store(pkmn)
     set_pending(nil)
     RTJTrade.save_game
+    puts "[mp] traded: gave #{mine&.name} got #{pkmn.name} party=#{$player.party.map(&:name).join(',')}" if $__debug
     send_cmd({ "k" => "trade_done", "tid" => p["tid"].to_s, "role" => p["role"].to_s })
     RTJTrade.refresh_follower
     RTJTrade.animation(mine, true) if mine
@@ -541,7 +543,7 @@ module RTJMP
       return
     end
     tid = m["tid"].to_s
-    m = wait_trade(_INTL("Waiting for {1} to choose a Pokémon...", partner), tid: tid)
+    m = wait_trade(_INTL("Waiting for {1}...", partner), tid: tid)
     if m.nil? || m["k"] == "trade_timeout"
       send_cmd({ "k" => "trade_cancel", "tid" => tid })
       pbMessage(_INTL("You stopped the trade."))
