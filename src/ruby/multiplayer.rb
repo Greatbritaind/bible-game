@@ -771,7 +771,14 @@ module RTJMP
     setBattleRule("canLose")
     setBattleRule("noExp")
     setBattleRule("noMoney") unless first_win
-    outcome = TrainerBattle.start_core(trainer)
+    sw = Settings::NO_MONEY_LOSS
+    was = $game_switches[sw]
+    $game_switches[sw] = true # no "you gave money to the winner"
+    begin
+      outcome = TrainerBattle.start_core(trainer)
+    ensure
+      $game_switches[sw] = was
+    end
     won = outcome == 1
     $player.money = money unless won
     $player.heal_party
