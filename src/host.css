@@ -27,7 +27,8 @@ button:disabled { opacity: 0.5; cursor: wait; }
 .tools h2 { font-size: 22px; margin: 22px 0 8px; }
 .tools h2:first-child { margin-top: 0; }
 .tool { display: flex; flex-direction: column; gap: 10px; }
-.row-tool { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.row-tool { display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 8px; }
+.row-tool .tool-msg { flex-basis: 100%; }
 textarea, select, input:not([type]), .tool input[maxlength] { font: inherit; font-size: 18px; padding: 8px 10px; border-radius: 10px; border: 2px solid var(--edge); background: #fff; color: var(--ink); }
 textarea { resize: vertical; width: 100%; }
 #q-text { width: 100%; }
