@@ -1,0 +1,24 @@
+:root { --ink: #2b2418; --paper: #f6efdc; --edge: #c9b88f; --accent: #8a4b1c; --ok: #2f7d3a; color-scheme: light; }
+* { box-sizing: border-box; }
+body { margin: 0; background: #e9dfc4; color: var(--ink); font-family: "Atkinson Hyperlegible", system-ui, sans-serif; }
+.host { max-width: 720px; margin: 0 auto; padding: 32px 16px 48px; }
+h1 { font-size: 36px; margin: 0 0 4px; }
+.sub { margin: 0 0 28px; font-size: 18px; opacity: 0.8; }
+section { background: var(--paper); border: 2px solid var(--edge); border-radius: 16px; padding: 24px; }
+button { font: inherit; cursor: pointer; border-radius: 12px; border: 2px solid var(--accent); background: #fff8e8; color: var(--ink); padding: 10px 18px; font-size: 18px; }
+button.big { background: var(--accent); color: #fff; font-size: 24px; padding: 16px 28px; width: 100%; }
+button:disabled { opacity: 0.5; cursor: wait; }
+.note { font-size: 18px; margin: 10px 0 0; }
+.label { margin: 0; font-size: 18px; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.7; text-align: center; }
+.code { font-size: clamp(72px, 20vw, 160px); font-weight: 700; letter-spacing: 0.12em; text-align: center; margin: 0; line-height: 1.1; color: var(--accent); font-variant-numeric: tabular-nums; }
+#live-box .note { text-align: center; }
+.roster-head { display: flex; align-items: center; gap: 10px; margin-top: 24px; border-top: 2px solid var(--edge); padding-top: 16px; }
+.roster-head h2 { margin: 0; font-size: 22px; }
+.count { background: var(--ok); color: #fff; border-radius: 999px; padding: 2px 12px; font-weight: 700; }
+.roster { list-style: none; padding: 0; margin: 12px 0 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
+.roster li { background: #fff; border: 1px solid var(--edge); border-radius: 10px; padding: 8px 12px; display: flex; flex-direction: column; }
+.roster li span { font-size: 15px; opacity: 0.75; }
+.roster li.empty { grid-column: 1 / -1; background: transparent; border: none; opacity: 0.7; }
+.end { border-color: #a33; color: #a33; }
+.status { min-height: 1.5em; font-size: 18px; margin-top: 16px; }
+@media (max-width: 480px) { .host { padding: 20px 16px; } h1 { font-size: 28px; } }

@@ -12,7 +12,7 @@ export default defineConfig({
   server: { headers: isolation, fs: { allow: [".."] } },
   preview: { headers: isolation },
   worker: { format: "es" },
-  build: { target: "es2022" },
+  build: { target: "es2022", rollupOptions: { input: { main: "index.html", host: "host.html" } } },
   esbuild: { target: "es2022" },
   optimizeDeps: { esbuildOptions: { target: "es2022" } },
 });

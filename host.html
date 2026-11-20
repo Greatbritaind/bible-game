@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Class Session · Road to Jerusalem</title>
+    <meta name="robots" content="noindex" />
+  </head>
+  <body>
+    <main class="host">
+      <h1>👥 Class Session</h1>
+      <p class="sub">Road to Jerusalem: classmates who type the same code see each other walk around.</p>
+
+      <section id="start-box">
+        <button id="start" class="big">Start a class session</button>
+        <p class="note">Gives you a 4-digit code that works for 3 hours, or until you end it.</p>
+      </section>
+
+      <section id="live-box" hidden>
+        <p class="label">Class code</p>
+        <p id="code" class="code">––––</p>
+        <p class="note">Students: ☰ → 👥 Join class → type this code.</p>
+        <p id="ends" class="note"></p>
+        <div class="roster-head"><h2>In the class</h2><span id="count" class="count">0</span></div>
+        <ul id="roster" class="roster"></ul>
+        <button id="end" class="end">End session</button>
+      </section>
+
+      <p id="status" class="status" role="status"></p>
+    </main>
+    <script type="module" src="./src/host.ts"></script>
+  </body>
+</html>
