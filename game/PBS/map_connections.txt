@@ -36,15 +36,17 @@
 41,North,0,40,South,0
 # Route 5 (41) - Route 6 Cycling Road (45)
 41,South,6,45,North,0
+# Route 2 (85) - Capernaum + (42)
+85,North,0,42,South,5
+# Route 5 (43) - Capernaum + (42)
+43,West,0,42,East,14
+# Route 1 (78) - Capernaum + (42)
+78,South,0,42,North,8
 # Route 7 (47) - Battle Frontier (52)
 47,East,8,52,West,0
+# Chorazin + (48) - Route 1 (78)
+48,South,0,78,North,0
 # Route 8 (69) - Safari Zone outside (66)
 69,North,0,66,South,10
-# Route 2 (85) - Capernaum (42)
-85,North,0,42,South,5
-# Route 5 (43) - Capernaum (42)
-43,West,0,42,East,14
-# Route 1 (78) - Capernaum (42)
-78,South,0,42,North,8
-# Chorazin (48) - Route 1 (78)
-48,South,0,78,North,0
+# Cana (86) - Route 3 (111)
+86,West,9,111,East,0
