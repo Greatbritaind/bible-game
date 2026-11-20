@@ -25,6 +25,7 @@ module RTJMP
         @character_name = name
       end
 
+      def name = "classmate"
       def can_move_in_direction?(*) = true
       def passable?(*) = true
       def check_event_trigger_touch(*) = false
