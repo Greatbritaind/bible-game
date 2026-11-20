@@ -17,11 +17,15 @@ export const CTL = {
   MOUSE_IN: 11,
   PAUSED: 12, // page sets to 1 while the tab is hidden
   SAVE_NOW: 13, // page sets to 1 to ask the game to save as soon as it safely can (low battery)
-  SIZE: 16,
+  MP_ON: 14, // page sets to 1 while the player is in a class session (multiplayer)
+  MP_SEQ: 15, // page increments after writing the other players into the mp buffer
+  MP_LEN: 16, // length of that text (UTF-16 code units)
+  SIZE: 20,
 } as const;
 
 export const KEYS_CAPACITY = 512; // UTF-16 code units for the comma-separated list of held keys
 export const TEXT_CAPACITY = 1024;
+export const MP_CAPACITY = 16 * 1024; // UTF-16 code units: the classmates on the player's map, one per line
 export const DECODE_CAPACITY = 48 * 1024 * 1024; // largest image the game can load (RGBA bytes)
 export const SCREEN_MAX_PIXELS = 1024 * 768; // largest game screen; two frame buffers of this size
 
@@ -31,6 +35,7 @@ export interface SharedBuffers {
   text: SharedArrayBuffer;
   decode: SharedArrayBuffer;
   audioPos: SharedArrayBuffer; // Float64 [bgm, bgs]
+  mp: SharedArrayBuffer; // classmates on this map (multiplayer), written by the page
   archive: SharedArrayBuffer;
   screen: SharedArrayBuffer; // two RGBA frame buffers, filled by the game thread
   /** [offset, length] of each game bundle inside `archive` */
@@ -44,6 +49,7 @@ export function createShared(archiveBytes: number, archiveParts: [number, number
     text: new SharedArrayBuffer(TEXT_CAPACITY * 2),
     decode: new SharedArrayBuffer(DECODE_CAPACITY),
     audioPos: new SharedArrayBuffer(16),
+    mp: new SharedArrayBuffer(MP_CAPACITY * 2),
     archive: new SharedArrayBuffer(archiveBytes),
     screen: new SharedArrayBuffer(SCREEN_MAX_PIXELS * 4 * 2),
     archiveParts,
@@ -67,6 +73,7 @@ export type ToPage =
   | { type: "progress" }
   | { type: "autosaved" }
   | { type: "guide"; json: string }
+  | { type: "mp"; state: string }
   | { type: "log"; level: "log" | "warn" | "error"; text: string };
 
 /** Message the page sends to start the game thread. */

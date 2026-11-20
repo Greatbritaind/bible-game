@@ -9,6 +9,7 @@ import { GameFiles } from "./gamefs";
 import { AudioSystem } from "./audio";
 import { CTL, DECODE_CAPACITY, KEYS_CAPACITY, SCREEN_MAX_PIXELS, TEXT_CAPACITY, createShared, type SharedBuffers, type StartMessage, type ToPage } from "./shared";
 import * as saves from "./saves";
+import { setupClass } from "./classui";
 
 const SAVE_FILE = "Game.rxdata";
 /** The trade mailbox (a Cloudflare Worker). Students trade Pokémon through it with short codes. */
@@ -978,7 +979,7 @@ function setupHudMenu() {
   document.addEventListener("pointerdown", (e) => {
     if (!items.hidden && !hud.contains(e.target as Node)) close();
   });
-  for (const id of ["voice-pop", "pad-pop", "keys-pop", "guide-pop"]) {
+  for (const id of ["voice-pop", "pad-pop", "keys-pop", "guide-pop", "class-pop"]) {
     new MutationObserver(() => {
       if (!$(id).hidden) close();
     }).observe($(id), { attributes: true, attributeFilter: ["hidden"] });
@@ -1163,6 +1164,8 @@ function runGame(p: Prepared, existingSaves: [string, Uint8Array][], passwordChe
   hudClick("hud-keys", () => keymap.toggle());
   hudClick("hud-pad", () => controller.toggle());
   hudClick("hud-guide", () => guide.toggle());
+  const classPlay = setupClass(shared, toast, /[?&]debug/.test(location.search) && /[?&]mptest/.test(location.search));
+  hudClick("hud-class", () => classPlay.toggle());
   hudClick("hud-save", () => void downloadSave(title));
   hudClick("hud-full", () => {
     if (document.fullscreenElement) void document.exitFullscreen();
@@ -1246,6 +1249,9 @@ function runGame(p: Prepared, existingSaves: [string, Uint8Array][], passwordChe
         break;
       case "guide":
         guide.update(m.json);
+        break;
+      case "mp":
+        classPlay.play.gameState(m.state);
         break;
       case "autosaved":
         if (relock?.isLocked()) relock.saved();

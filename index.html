@@ -63,6 +63,7 @@
       <button id="hud-menu" class="hud-btn" title="Menu" aria-label="Menu" aria-expanded="false" aria-controls="hud-items">☰</button>
       <div id="hud-items" class="hud-items" hidden>
       <button id="hud-guide" data-label="What to do" class="hud-btn" title="What to do" aria-label="What to do">📜</button>
+      <button id="hud-class" data-label="Join class" class="hud-btn" title="Class: see your classmates walk around" aria-label="Class">👥</button>
       <button id="hud-read" data-label="Read aloud" class="hud-btn" title="Read aloud: off. Right-click or hold to choose a voice." aria-label="Read aloud" aria-pressed="false">🔈</button>
       <button id="hud-crt" data-label="Old TV look" class="hud-btn" title="Old TV look: off" aria-label="Old TV look" aria-pressed="false">📺</button>
       <button id="hud-pad" data-label="Controller" class="hud-btn" title="Controller" aria-label="Controller settings">🎮</button>
@@ -101,6 +102,28 @@
       <div class="row">
         <button id="guide-read" class="small">🔊 Read this</button>
         <button id="guide-done" class="small">Done</button>
+      </div>
+    </div>
+
+    <div id="class-pop" class="keys pop pad-pop class-pop" role="dialog" aria-label="Class" data-ui hidden>
+      <p class="voices-title">👥 Class</p>
+      <div id="class-out">
+        <p class="pad-help">Type the class code from your teacher to see your classmates walk around.</p>
+        <form id="class-form" class="class-form" autocomplete="off">
+          <input id="class-code" class="class-code" type="text" inputmode="numeric" maxlength="4" placeholder="1234" aria-label="Class code" autocomplete="off" spellcheck="false" data-lpignore="true" data-1p-ignore />
+          <button type="submit" class="small">Join</button>
+        </form>
+        <p id="class-msg" class="pad-status" role="status"></p>
+        <div class="row"><button id="class-done" class="small">Done</button></div>
+      </div>
+      <div id="class-in" hidden>
+        <p class="class-big">Class <span id="class-which"></span></p>
+        <p id="class-here" class="pad-help"></p>
+        <p class="hint">Classmates are just for seeing. They can't change your game.</p>
+        <div class="row">
+          <button id="class-leave" class="small">Leave class</button>
+          <button id="class-done2" class="small">Done</button>
+        </div>
       </div>
     </div>
 

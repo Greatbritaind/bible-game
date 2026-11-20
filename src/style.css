@@ -770,3 +770,9 @@ kbd {
   width: 100%;
   margin-top: 6px;
 }
+
+/* ☰ → Class (multiplayer) */
+.class-form { display: flex; gap: 8px; align-items: center; margin: 8px 0; }
+.class-code { font: inherit; font-size: 28px; letter-spacing: 0.3em; width: 6.2em; text-align: center; padding: 6px 8px; border-radius: 8px; border: 2px solid #8a7a5a; }
+.class-big { font-size: 26px; font-weight: 700; margin: 4px 0 8px; }
+.hud-btn.on { outline: 2px solid #5fbf6a; }

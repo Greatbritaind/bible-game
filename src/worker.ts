@@ -3,7 +3,7 @@ import { ConsoleStdout, Directory, File, OpenFile, PreopenDirectory, WASI } from
 import { RubyVM } from "@ruby/wasm-wasi";
 import { CIMap, GameFiles } from "./gamefs";
 import { Engine } from "./engine";
-import { CTL, type StartMessage, type ToPage } from "./shared";
+import { CTL, MP_CAPACITY, type StartMessage, type ToPage } from "./shared";
 import rgssSource from "./ruby/rgss.rb?raw";
 import bootSource from "./ruby/boot.rb?raw";
 import iteratorsSource from "./ruby/iterators.rb?raw";
@@ -11,6 +11,7 @@ import readAloudSource from "./ruby/readaloud.rb?raw";
 import tradeSource from "./ruby/trade.rb?raw";
 import autoSaveSource from "./ruby/autosave.rb?raw";
 import guideSource from "./ruby/guide.rb?raw";
+import mpSource from "./ruby/multiplayer.rb?raw";
 
 const post = (msg: ToPage, transfer: Transferable[] = []) => (self as unknown as Worker).postMessage(msg, transfer);
 
@@ -36,6 +37,8 @@ async function run(start: StartMessage) {
   const game = new GameFiles(start.shared.archive, start.shared.archiveParts);
   const engine = new Engine(game, start.shared, post);
   const control = new Int32Array(start.shared.control);
+  const mpBuf = new Uint16Array(start.shared.mp);
+  let mpSeen = -1;
   await engine.loadFonts();
 
   // Save files live in /save; any change is sent to the page, which keeps them in the browser
@@ -122,6 +125,19 @@ async function run(start: StartMessage) {
     autosaved: () => post({ type: "autosaved" }),
     guide: (json: string) => post({ type: "guide", json }),
     save_now_requested: () => Atomics.exchange(control, CTL.SAVE_NOW, 0),
+    // Multiplayer (class sessions): the game sends where the player is; the page sends back the
+    // classmates on the same map. Nothing happens unless the player joined a class.
+    mp_active: () => Atomics.load(control, CTL.MP_ON),
+    mp_send: (state: string) => post({ type: "mp", state: String(state) }),
+    mp_read: () => {
+      const seq = Atomics.load(control, CTL.MP_SEQ);
+      if (seq === mpSeen) return "~"; // nothing new
+      mpSeen = seq;
+      const n = Math.min(Atomics.load(control, CTL.MP_LEN), MP_CAPACITY);
+      let s = "";
+      for (let i = 0; i < n; i += 4096) s += String.fromCharCode(...mpBuf.subarray(i, Math.min(n, i + 4096)));
+      return s;
+    },
     trade_available: () => (start.tradeServer ? 1 : 0),
     // Trading post requests. The game waits for the answer (a worker may make synchronous requests).
     trade: (action: string, body: string) => {
@@ -153,5 +169,5 @@ async function run(start: StartMessage) {
   const [w, h] = start.screen;
   // Synchronous: the game runs until it quits. Graphics.update sleeps between frames.
   vm.eval(iteratorsSource);
-  vm.eval(rgssSource + `\nGraphics.resize_screen(${w}, ${h})\n` + readAloudSource + "\n" + tradeSource + "\n" + autoSaveSource + "\n" + guideSource + "\n" + bootSource);
+  vm.eval(rgssSource + `\nGraphics.resize_screen(${w}, ${h})\n` + readAloudSource + "\n" + tradeSource + "\n" + autoSaveSource + "\n" + guideSource + "\n" + mpSource + "\n" + bootSource);
 }

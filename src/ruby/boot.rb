@@ -16,6 +16,7 @@ begin
     if i == $RGSS_SCRIPTS.size - 1
       ReadAloud.install
       RTJAutoSave.install
+      RTJMP.install
     end
     # "SectionNNN" lets Essentials' error messages show the script's name
     before = Object.private_instance_methods(false)
