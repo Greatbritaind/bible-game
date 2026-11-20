@@ -865,6 +865,7 @@ module Graphics
     def update
       Audio.__update
       __watch_progress
+      RTJMP.update if defined?(RTJMP) && RTJMP.ready && !@__in_transition
       if $__debug && $__debug_cmd && !$__debug_cmd.empty? && $__debug_cmd != "gc" && !@__in_transition && (@__dbg_frames = (@__dbg_frames || 0) + 1) > 600 && defined?(Scene_Map) && $scene.is_a?(Scene_Map) &&
          $game_temp && !$game_temp.in_menu
         cmd = $__debug_cmd

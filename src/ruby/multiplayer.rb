@@ -59,11 +59,11 @@ module RTJMP
   @active = false
 
   class << self
-    attr_reader :ghosts
+    attr_reader :ghosts, :ready
   end
 
   def self.on_map?
-    defined?(Scene_Map) && $scene.is_a?(Scene_Map) && $game_map && $game_player && $player
+    defined?(Scene_Map) && $scene.is_a?(Scene_Map) && $game_map && $game_player && $player && !($game_temp && $game_temp.in_battle)
   end
 
   # The player's map, tile, facing and look, sent whenever one of them changes
@@ -167,12 +167,7 @@ module RTJMP
   def self.install
     return unless defined?(Scene_Map) && defined?(Game_Character)
     define_ghost
-    Scene_Map.prepend(Module.new do
-      def update
-        super
-        RTJMP.update
-      end
-    end)
+    @ready = true
   rescue StandardError => e
     puts "[mp] install: #{e.message}" if $__debug
   end
