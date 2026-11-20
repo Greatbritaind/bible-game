@@ -51,7 +51,7 @@ function show(c: string, expires: number) {
         p.textContent = w.p || "";
         const st = document.createElement("span");
         st.className = "stats";
-        if (w.dx != null) st.textContent = `🏅 ${w.b ?? 0} seals · 📖 ${w.dx} caught · ⭐ Lv ${w.lv ?? 0}`;
+        if (w.dx != null) st.textContent = `🏅 ${w.b ?? 0} ${(w.b ?? 0) === 1 ? "seal" : "seals"} · 📖 ${w.dx} caught · ⭐ Lv ${w.lv ?? 0}`;
         li.append(n, p, st);
         return li;
       }));
