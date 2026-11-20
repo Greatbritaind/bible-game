@@ -76,7 +76,28 @@ function ended(msg: string) {
   status(msg);
 }
 
+// Class end time: defaults to 50 minutes from now, rounded to 5 minutes
+const endInput = $<HTMLInputElement>("end-time");
+{
+  const d = new Date(Date.now() + 50 * 60000);
+  d.setMinutes(Math.ceil(d.getMinutes() / 5) * 5, 0, 0);
+  endInput.value = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
+/** The chosen end time as a timestamp, or an error message */
+function chosenEnd(): number | string {
+  const [h, m] = endInput.value.split(":").map(Number);
+  if (!Number.isFinite(h) || !Number.isFinite(m)) return "Pick a time for class to end.";
+  const d = new Date();
+  d.setHours(h, m, 0, 0);
+  const ms = d.getTime() - Date.now();
+  if (ms <= 60000) return "Pick a time later than now.";
+  if (ms > SESSION_MS) return "Pick a time within the next 3 hours.";
+  return now() + ms;
+}
+
 $("start").onclick = async () => {
+  const end = chosenEnd();
+  if (typeof end === "string") { status(end); return; }
   status("Starting…");
   $<HTMLButtonElement>("start").disabled = true;
   try {
@@ -86,7 +107,7 @@ $("start").onclick = async () => {
       const s = await get(ref(db, `sessions/${c}/expires`));
       if (s.exists() && Number(s.val()) > now()) continue; // in use by another class
       if (s.exists()) await remove(ref(db, `sessions/${c}`)).catch(() => {});
-      const expires = now() + SESSION_MS;
+      const expires = Math.min(end, now() + SESSION_MS);
       try {
         await set(ref(db, `sessions/${c}`), { host: uid, created: serverTimestamp(), expires });
       } catch {

@@ -39,3 +39,5 @@ textarea { resize: vertical; width: 100%; }
 .tool-msg { margin: 0; min-height: 1.3em; color: var(--ok); font-weight: 700; }
 .q-results { font-size: 17px; }
 .q-results .names { opacity: 0.8; }
+.end-at { display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 20px; font-weight: 700; margin-bottom: 14px; }
+.end-at input { font: inherit; font-size: 22px; padding: 8px 10px; border-radius: 10px; border: 2px solid var(--edge); background: #fff; color: var(--ink); }

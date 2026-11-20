@@ -268,7 +268,7 @@ module RTJMP
       @bonus_until = now + m["rem"].to_i / 1000.0
       puts "[mp] bonus on: #{bonus?} expcharm=#{$bag.has?(:EXPCHARM) rescue $!}" if $__debug
     when "swarm"
-      species = (GameData::Species.get(m["species"].to_s.upcase.to_sym).id rescue nil)
+      species = (GameData::Species.get(m["species"].to_s.to_sym).id rescue (GameData::Species.get(m["species"].to_s.upcase.to_sym).id rescue nil))
       map = m["map"].to_i
       if species && map > 0
         @swarm = { map: map, species: species, level: m["level"].to_i.clamp(2, 60), until: now + m["rem"].to_i / 1000.0, name: m["place"].to_s }
