@@ -143,6 +143,7 @@ export class ClassPlay {
   private pushedEvents = new Set<string>();
   private seenAnnounce = "";
   private tradeWatch = new Map<string, () => void>();
+  private profile: { b: number; dx: number; lv: number; tt: string; tm: string } | null = null;
   onChange: () => void = () => {};
   onEnded: () => void = () => {};
   onAnnounce: (a: Announcement) => void = () => {};
@@ -256,7 +257,7 @@ export class ClassPlay {
       const path = `${base}/maps/${map}/${db.uid}`;
       db.removeOnDisconnect(path);
       void db.set(path, { ...me, t: db.stamp() }).catch((e) => console.warn("class: could not share position", e));
-      void db.set(`${base}/who/${db.uid}`, { n: me.n, p: place ?? "", t: db.stamp() }).catch(() => {});
+      void db.update(`${base}/who/${db.uid}`, { n: me.n, p: place ?? "", t: db.stamp(), ...(this.profile ?? {}) }).catch(() => {});
       this.stopMap?.();
       this.stopMap = db.onValue(`${base}/maps/${map}`, (v) => {
         const all = (v ?? {}) as Record<string, Omit<Other, "id">>;
@@ -362,6 +363,21 @@ export class ClassPlay {
         case "answer":
           if (this.code) await db.set(`sessions/${this.code}/answers/${m.ev}/${db.uid}`, { n: String(m.n ?? "").slice(0, 20), ok: !!m.ok, t: db.stamp() });
           break;
+        case "profile": {
+          // seals, Pokédex, highest level and the team summary, for the teacher and for battles
+          const team = Array.isArray(m.team) ? m.team.slice(0, 6) : [];
+          this.profile = { b: Number(m.b) | 0, dx: Number(m.dx) | 0, lv: Number(m.lv) | 0, tt: String(m.tt ?? "").slice(0, 40), tm: JSON.stringify(team).slice(0, 6000) };
+          if (this.code && this.map >= 0) await db.update(`sessions/${this.code}/who/${db.uid}`, this.profile);
+          break;
+        }
+        case "team_get": {
+          if (!this.code) throw new Error("not in a class");
+          const w = (await db.get(`sessions/${this.code}/who/${String(m.uid)}`)) as Json | null;
+          let team: unknown = [];
+          try { team = JSON.parse(String(w?.tm ?? "[]")); } catch { /* bad data: no team */ }
+          this.send({ k: "team", ref: m.ref, team, tt: String(w?.tt ?? "") });
+          break;
+        }
         case "trade_ask": await this.tradeAsk(db, m); break;
         case "trade_offer": await this.tradeOffer(db, m); break;
         case "trade_confirm": await this.tradeConfirm(db, m); break;
@@ -382,6 +398,7 @@ export class ClassPlay {
     } catch (e) {
       console.warn("class:", k, e);
       if (k.startsWith("trade")) this.send({ k: "trade_error", ref: m.ref, tid: m.tid });
+      if (k === "team_get") this.send({ k: "team", ref: m.ref, team: [], tt: "" });
     }
   }
 

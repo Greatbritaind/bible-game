@@ -39,7 +39,7 @@ function show(c: string, expires: number) {
   stops.forEach((f) => f());
   stops = [
     onValue(ref(db, `sessions/${c}/who`), (s) => {
-      const who = (s.val() ?? {}) as Record<string, { n?: string; p?: string }>;
+      const who = (s.val() ?? {}) as Record<string, { n?: string; p?: string; b?: number; dx?: number; lv?: number }>;
       const list = Object.values(who).sort((a, b) => String(a.n).localeCompare(String(b.n)));
       $("count").textContent = String(list.length);
       const ul = $("roster");
@@ -49,7 +49,10 @@ function show(c: string, expires: number) {
         n.textContent = w.n || "Player";
         const p = document.createElement("span");
         p.textContent = w.p || "";
-        li.append(n, p);
+        const st = document.createElement("span");
+        st.className = "stats";
+        if (w.dx != null) st.textContent = `🏅 ${w.b ?? 0} seals · 📖 ${w.dx} caught · ⭐ Lv ${w.lv ?? 0}`;
+        li.append(n, p, st);
         return li;
       }));
       if (!list.length) {

@@ -15,7 +15,7 @@ button:disabled { opacity: 0.5; cursor: wait; }
 .roster-head { display: flex; align-items: center; gap: 10px; margin-top: 24px; border-top: 2px solid var(--edge); padding-top: 16px; }
 .roster-head h2 { margin: 0; font-size: 22px; }
 .count { background: var(--ok); color: #fff; border-radius: 999px; padding: 2px 12px; font-weight: 700; }
-.roster { list-style: none; padding: 0; margin: 12px 0 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
+.roster { list-style: none; padding: 0; margin: 12px 0 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px; }
 .roster li { background: #fff; border: 1px solid var(--edge); border-radius: 10px; padding: 8px 12px; display: flex; flex-direction: column; }
 .roster li span { font-size: 15px; opacity: 0.75; }
 .roster li.empty { grid-column: 1 / -1; background: transparent; border: none; opacity: 0.7; }
@@ -41,3 +41,4 @@ textarea { resize: vertical; width: 100%; }
 .q-results .names { opacity: 0.8; }
 .end-at { display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 20px; font-weight: 700; margin-bottom: 14px; }
 .end-at input { font: inherit; font-size: 22px; padding: 8px 10px; border-radius: 10px; border: 2px solid var(--edge); background: #fff; color: var(--ink); }
+.roster li span.stats { font-size: 14px; opacity: 0.9; margin-top: 4px; color: var(--ink); }

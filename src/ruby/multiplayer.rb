@@ -104,6 +104,7 @@ module RTJMP
         RGSSRuntime.call(:mp_send, s)
       end
       receive if @frame % 3 == 0
+      share_profile if @frame % 200 == 7
       @ghosts.each_value(&:update)
       update_sprites
     end
@@ -280,7 +281,7 @@ module RTJMP
         end
       end
     when "trade_ask" then @queue << m
-    when "trade_started", "trade_state", "trade_error" then @trade_msgs << m
+    when "trade_started", "trade_state", "trade_error", "team" then @trade_msgs << m
     end
   end
 
@@ -391,7 +392,12 @@ module RTJMP
     g = @ghosts.values.find { |gh| gh.x == fx && gh.y == fy && !gh.moving? }
     return unless g
     @busy = true
-    ask_trade(g)
+    pick = pbMessage(_INTL("What do you want to do with {1}?", g.label.to_s),
+                     [_INTL("Battle"), _INTL("Trade"), _INTL("Cancel")], 3)
+    case pick
+    when 0 then battle_classmate(g)
+    when 1 then ask_trade(g)
+    end
   ensure
     @busy = false
   end
@@ -542,7 +548,6 @@ module RTJMP
   # A: walk up and ask
   def self.ask_trade(g)
     partner = g.label.to_s
-    return unless pbConfirmMessage(_INTL("Trade with {1}?", partner))
     return unless can_trade?
     idx = choose_pokemon(_INTL("Choose a Pokémon to offer {1}.", partner))
     return unless idx
@@ -666,6 +671,113 @@ module RTJMP
     end
   ensure
     @busy = false
+  end
+
+  # ---------------------------------------------------------------- class progress + team
+  # Shared with the class: seals, Pokédex, highest level (for the teacher's list), and a short
+  # summary of the team (so classmates can battle a copy of it). Sent only when it changes.
+  def self.profile
+    team = $player.party.reject(&:egg?).first(6).map do |pk|
+      stats = GameData::Stat.each_main.map(&:id)
+      { "s" => pk.species.to_s, "f" => pk.form.to_i, "l" => pk.level, "g" => pk.gender,
+        "n" => pk.name.to_s[0, 12], "m" => pk.moves.map { |mv| mv.id.to_s },
+        "a" => pk.ability_id.to_s, "i" => pk.item_id.to_s, "nt" => pk.nature_id.to_s,
+        "iv" => stats.map { |st| pk.iv[st].to_i }, "ev" => stats.map { |st| pk.ev[st].to_i },
+        "sh" => pk.shiny? ? 1 : 0 }
+    end
+    { "k" => "profile", "b" => $player.badge_count, "dx" => $player.pokedex.owned_count,
+      "lv" => ($player.party.reject(&:egg?).map(&:level).max || 0),
+      "tt" => $player.trainer_type.to_s, "team" => team }
+  end
+
+  def self.share_profile
+    text = RTJTrade::JSON_LITE.dump(profile)
+    return if text == @profile_sent
+    @profile_sent = text
+    RGSSRuntime.call(:mp_cmd, text)
+  rescue StandardError => e
+    puts "[mp] profile: #{e.message}" if $__debug
+  end
+
+  def self.sym_if(kind, v)
+    id = v.to_s
+    return nil if id.empty?
+    kind.try_get(id.to_sym)&.id
+  end
+
+  # One Pokémon of a classmate's team, rebuilt from the summary (every value checked)
+  def self.build_pokemon(h, owner)
+    return nil unless h.is_a?(Hash)
+    sp = sym_if(GameData::Species, h["s"])
+    return nil unless sp
+    pk = Pokemon.new(sp, h["l"].to_i.clamp(1, GameData::GrowthRate.max_level), owner)
+    (pk.form_simple = h["f"].to_i) rescue nil
+    pk.gender = h["g"].to_i if [0, 1].include?(h["g"].to_i) && !pk.singleGendered?
+    (a = sym_if(GameData::Ability, h["a"])) && pk.ability = a
+    (n = sym_if(GameData::Nature, h["nt"])) && pk.nature = n
+    (i = sym_if(GameData::Item, h["i"])) && pk.item = i
+    moves = Array(h["m"]).filter_map { |mv| sym_if(GameData::Move, mv) }.uniq.first(4)
+    unless moves.empty?
+      pk.forget_all_moves
+      moves.each { |mv| pk.learn_move(mv) }
+    end
+    stats = GameData::Stat.each_main.map(&:id)
+    stats.each_with_index do |st, idx|
+      pk.iv[st] = Array(h["iv"])[idx].to_i.clamp(0, Pokemon::IV_STAT_LIMIT) if h["iv"]
+      pk.ev[st] = Array(h["ev"])[idx].to_i.clamp(0, Pokemon::EV_STAT_LIMIT) if h["ev"]
+    end
+    pk.shiny = h["sh"].to_i == 1
+    nm = h["n"].to_s.strip
+    pk.name = nm[0, 12] unless nm.empty?
+    pk.calc_stats
+    pk.heal
+    pk
+  rescue StandardError => e
+    puts "[mp] team pokemon: #{e.message}" if $__debug
+    nil
+  end
+
+  # Battle a copy of a classmate's team. Nothing is lost: no money taken, no EXP, everyone is
+  # healed after. The first win against each classmate in a class gives prize money.
+  def self.battle_classmate(g)
+    partner = g.label.to_s
+    if $player.able_pokemon_count == 0
+      pbMessage(_INTL("Your Pokémon are too tired to battle. Heal them first."))
+      return
+    end
+    ref = "b#{rand(1_000_000)}"
+    send_cmd({ "k" => "team_get", "ref" => ref, "uid" => g.uid })
+    m = wait_trade(_INTL("Getting {1}'s team...", partner), ref: ref, can_cancel: false, timeout: 15)
+    tt = (m && sym_if(GameData::TrainerType, m["tt"])) || $player.trainer_type
+    trainer = NPCTrainer.new(partner, tt)
+    trainer.party = (m && m["k"] == "team" ? Array(m["team"]) : []).first(6).filter_map { |h| build_pokemon(h, trainer) }
+    if trainer.party.empty?
+      pbMessage(_INTL("Couldn't get {1}'s team. Try again in a moment.", partner))
+      return
+    end
+    trainer.lose_text = _INTL("Good battle!")
+    @beaten ||= {}
+    first_win = !@beaten[g.uid]
+    money = $player.money
+    pbMessage(_INTL("You'll battle a copy of {1}'s team. Nobody loses anything!", partner))
+    setBattleRule("canLose")
+    setBattleRule("noExp")
+    setBattleRule("noMoney") unless first_win
+    outcome = TrainerBattle.start_core(trainer)
+    won = outcome == 1
+    $player.money = money unless won
+    $player.heal_party
+    @beaten[g.uid] = true if won
+    puts "[mp] battle vs #{partner}: outcome=#{outcome}" if $__debug
+    if won
+      pbMessage(_INTL("You beat {1}'s team! Your Pokémon are rested.", partner))
+    else
+      pbMessage(_INTL("{1}'s team won this time. Your Pokémon are rested.", partner))
+    end
+  rescue StandardError => e
+    puts "[mp] battle: #{e.class}: #{e.message} #{e.backtrace&.first}" if $__debug
+    $game_temp.clear_battle_rules rescue nil
+    $player.heal_party rescue nil
   end
 
   # ---------------------------------------------------------------- setup
