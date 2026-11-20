@@ -340,8 +340,8 @@ module RTJMP
     if right
       item = (GameData::Item.get(m["reward"].to_s.upcase.to_sym) rescue nil)
       if item
-        $bag.add(item.id, 1)
-        pbMessage(_INTL("\\me[Item get]That's right! You got {1}!\\wtnp[30]", item.name))
+        pbMessage(_INTL("That's right!"))
+        pbReceiveItem(item.id)
       else
         pbMessage(_INTL("That's right! Well done!"))
       end
