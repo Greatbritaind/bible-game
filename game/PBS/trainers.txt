@@ -271,3 +271,51 @@ Pokemon = ODDISH,11
 LoseText = Sweet, like ripe grapes. You may pass.
 Pokemon = BELLSPROUT,11
 Pokemon = HOPPIP,12
+#-------------------------------
+# Route 3 (map 111): Cana to the Nazareth caves
+#-------------------------------
+[SHEPHERD,Caleb]
+LoseText = My goats would laugh at me.
+Pokemon = PONYTA,14
+Pokemon = DODUO,14
+#-------------------------------
+[BAKER,Seth]
+LoseText = My bread rose better than my team.
+Pokemon = RATTATA,13
+Pokemon = SPEAROW,13
+Pokemon = MEOWTH,14
+#-------------------------------
+[WEAVER,Mara]
+LoseText = My threads came loose!
+Pokemon = METAPOD,14
+Pokemon = BUTTERFREE,15
+#-------------------------------
+[TENTMAKER,Levi]
+LoseText = Ripped like an old tent.
+Pokemon = SANDSHREW,14
+Pokemon = MANKEY,15
+#-------------------------------
+[ELDER_F,Hulda]
+LoseText = Oh my. You're quick, child.
+Pokemon = PARAS,14
+Pokemon = VENONAT,15
+#-------------------------------
+[LITTLEGIRL1,Talia]
+LoseText = Don't tell my brother.
+Pokemon = JIGGLYPUFF,13
+Pokemon = NIDORANfE,14
+#-------------------------------
+[PHARISEE,Joel]
+LoseText = A good lesson. I will remember it.
+Pokemon = DROWZEE,15
+Pokemon = SLOWPOKE,15
+#-------------------------------
+[SPICETRADER,Adina]
+LoseText = Too spicy for me!
+Pokemon = EKANS,14
+Pokemon = KOFFING,15
+#-------------------------------
+[ELDER,Omri]
+LoseText = These old bones need a rest.
+Pokemon = GEODUDE,15
+Pokemon = SANDSHREW,15
