@@ -64,6 +64,7 @@
       <div id="hud-items" class="hud-items" hidden>
       <button id="hud-guide" data-label="What to do" class="hud-btn" title="What to do" aria-label="What to do">📜</button>
       <button id="hud-class" data-label="Join class" class="hud-btn" title="Class: see your classmates walk around" aria-label="Class">👥</button>
+      <button id="hud-emote" data-label="Emote" class="hud-btn" title="Show an emote to your classmates" aria-label="Emote" hidden>😄</button>
       <button id="hud-read" data-label="Read aloud" class="hud-btn" title="Read aloud: off. Right-click or hold to choose a voice." aria-label="Read aloud" aria-pressed="false">🔈</button>
       <button id="hud-crt" data-label="Old TV look" class="hud-btn" title="Old TV look: off" aria-label="Old TV look" aria-pressed="false">📺</button>
       <button id="hud-pad" data-label="Controller" class="hud-btn" title="Controller" aria-label="Controller settings">🎮</button>
@@ -124,6 +125,29 @@
           <button id="class-leave" class="small">Leave class</button>
           <button id="class-done2" class="small">Done</button>
         </div>
+      </div>
+    </div>
+
+    <div id="emote-pop" class="keys pop pad-pop emote-pop" role="dialog" aria-label="Emotes" data-ui hidden>
+      <p class="voices-title">😄 Emote</p>
+      <p class="pad-help">Your classmates see it over your trainer.</p>
+      <div class="emote-row">
+        <button class="emote-btn" data-e="1" aria-label="Surprised">❗</button>
+        <button class="emote-btn" data-e="2" aria-label="Question">❓</button>
+        <button class="emote-btn" data-e="3" aria-label="Love">❤️</button>
+        <button class="emote-btn" data-e="4" aria-label="Wave">👋</button>
+        <button class="emote-btn" data-e="5" aria-label="Happy">😄</button>
+      </div>
+      <div class="row"><button id="emote-done" class="small">Done</button></div>
+    </div>
+
+    <div id="announce" class="announce" role="alert" data-ui hidden>
+      <p class="announce-title">📣 From your teacher</p>
+      <p id="announce-text" class="announce-text"></p>
+      <p id="announce-save" class="announce-save" hidden>💾 Saving your game…</p>
+      <div class="row">
+        <button id="announce-read" class="small">🔊 Read this</button>
+        <button id="announce-ok" class="small">OK</button>
       </div>
     </div>
 
