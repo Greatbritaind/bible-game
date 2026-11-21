@@ -57,7 +57,7 @@ module RTJGuide
       { text: "Earn the Nazareth Seal from Master Jotham at the Seal House.", done: -> { $player.badges[1] } },
     ] },
     { title: "The Quiet Town", type: :main, built: false, steps: [
-      { text: "Take Route 4 east to Nain.", done: -> { false } },
+      { text: "Take Route 4 east to Nain. The road is through Eli's house.", done: -> { false } },
       { text: "Walk through Nain and see what is happening.", done: -> { false } },
     ] },
     { title: "Back to Capernaum", type: :main, built: false, steps: [
