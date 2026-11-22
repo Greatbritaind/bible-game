@@ -530,3 +530,8 @@ MapPosition = 2,13,5
 #-------------------------------
 [110]   # Cana House 13
 MapPosition = 2,13,5
+#-------------------------------
+[120]   # Nazareth Caves
+Name = Nazareth Caves
+BattleBack = cave1
+Environment = Cave
