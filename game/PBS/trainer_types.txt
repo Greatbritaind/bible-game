@@ -452,7 +452,7 @@ Gender = Female
 BaseMoney = 32
 #-------------------------------
 [PHARISEE]
-Name = Pharisee
+Name = Student
 Gender = Male
 BaseMoney = 20
 #-------------------------------

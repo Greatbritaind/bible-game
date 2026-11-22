@@ -197,7 +197,7 @@ LoseText = Not bad. Don't tell the others.
 Pokemon = MANKEY,7
 Pokemon = RATTATA,6
 #-------------------------------
-[PHARISEE,Nahum]
+[PHARISEE,Eliab]
 LoseText = Well fought. Wisdom and courage go together.
 Pokemon = ABRA,12
 Pokemon = DROWZEE,13
@@ -319,3 +319,8 @@ Pokemon = KOFFING,15
 LoseText = These old bones need a rest.
 Pokemon = GEODUDE,15
 Pokemon = SANDSHREW,15
+#-------------------------------
+[STONECUTTER,Hiram]
+LoseText = Ha! You're ready for Master Jotham.
+Pokemon = GEODUDE,15
+Pokemon = DIGLETT,16
