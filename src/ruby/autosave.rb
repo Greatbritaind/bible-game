@@ -1,4 +1,5 @@
-# Auto-save: the game saves by itself every few minutes and whenever the player enters a new map,
+# Auto-save: the game saves by itself every few minutes, whenever the player enters a new map,
+# and right after every trainer battle the player wins,
 # but only at a safe moment (walking around on the map: no message, menu, battle or event running).
 # The page can also ask for a save right away (low battery).
 #
@@ -29,7 +30,23 @@ module RTJAutoSave
     id && $game_switches && $game_switches[id]
   end
 
+  # Save soon after every trainer battle the player wins, so a beaten trainer is never lost
+  # (otherwise a reload within a few minutes could bring them back for a second battle).
+  def self.save_soon
+    @urgent = true
+  end
+
   def self.install
+    if defined?(TrainerBattle) && !TrainerBattle.respond_to?(:__rtj_start)
+      class << TrainerBattle
+        alias_method :__rtj_start, :start
+        def start(*args)
+          won = __rtj_start(*args)
+          RTJAutoSave.save_soon if won
+          won
+        end
+      end
+    end
     return unless defined?(MenuHandlers)
     MenuHandlers.add(:options_menu, :rtj_autosave, {
       "name"        => _INTL("Auto-Save"),
@@ -89,7 +106,7 @@ module RTJAutoSave
       return
     end
     saved = Game.save
-    puts "[autosave] #{saved ? 'saved' : 'failed'}#{@urgent ? ' (battery)' : ''}#{@map_changed ? ' (new map)' : ''}" if $__debug
+    puts "[autosave] #{saved ? 'saved' : 'failed'}#{@urgent ? ' (soon)' : ''}#{@map_changed ? ' (new map)' : ''}" if $__debug
     return unless saved
     @last_count = $game_system.save_count
     @last_time = now
