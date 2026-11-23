@@ -104,31 +104,31 @@ Pokemon = SQUIRTLE,5
 #-------------------------------
 [ZEALOT,Simeon]
 LoseText = Fine. Go. But the fight is coming.
-Pokemon = MANKEY,15
-Pokemon = SANDSHREW,15
+Pokemon = MANKEY,17
+Pokemon = SANDSHREW,17
 #-------------------------------
 [ZEALOTW,Noa]
 LoseText = You fight well. Think about joining us.
-Pokemon = EKANS,14
-Pokemon = MANKEY,16
+Pokemon = EKANS,16
+Pokemon = MANKEY,18
 #-------------------------------
 [RIVAL1,Blue,3]
 LoseText = You got lucky. The Zealots will see what I can do.
-Pokemon = PIDGEY,15
-Pokemon = MANKEY,14
-Pokemon = BULBASAUR,17
+Pokemon = PIDGEY,17
+Pokemon = MANKEY,16
+Pokemon = BULBASAUR,19
 #-------------------------------
 [RIVAL1,Blue,4]
 LoseText = You got lucky. The Zealots will see what I can do.
-Pokemon = PIDGEY,15
-Pokemon = MANKEY,14
-Pokemon = CHARMANDER,17
+Pokemon = PIDGEY,17
+Pokemon = MANKEY,16
+Pokemon = CHARMANDER,19
 #-------------------------------
 [RIVAL1,Blue,5]
 LoseText = You got lucky. The Zealots will see what I can do.
-Pokemon = PIDGEY,15
-Pokemon = MANKEY,14
-Pokemon = SQUIRTLE,17
+Pokemon = PIDGEY,17
+Pokemon = MANKEY,16
+Pokemon = SQUIRTLE,19
 #-------------------------------
 [CHAMPION,Blue]
 LoseText = A good battle indeed!
@@ -322,5 +322,15 @@ Pokemon = SANDSHREW,15
 #-------------------------------
 [STONECUTTER,Hiram]
 LoseText = Ha! You're ready for Master Jotham.
-Pokemon = GEODUDE,15
-Pokemon = DIGLETT,16
+Pokemon = GEODUDE,17
+Pokemon = DIGLETT,18
+#-------------------------------
+[SHEPHERD,Jesse]
+LoseText = Aw... I guess it's yours now.
+Pokemon = ZUBAT,17
+Pokemon = SANDSHREW,18
+#-------------------------------
+[WEAVER,Judith]
+LoseText = You're strong! You're ready for Nazareth.
+Pokemon = PARAS,18
+Pokemon = VENONAT,18
