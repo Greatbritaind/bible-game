@@ -20,6 +20,7 @@ module RTJGuide
   CHORAZIN = 48
   CAPERNAUM = 42
   CANA = 86
+  NAZARETH = 112
   ARBEL_FOREST = 84
   EZER = 9 # Arbel Forest event that battles Ezer and Tova; self switch A is on after
 
@@ -52,8 +53,8 @@ module RTJGuide
     { title: "The Cana Seal", type: :main, built: true, steps: [
       { text: "Earn the Cana Seal from Master Hannah at the Seal House.", done: -> { $player.badges[0] } },
     ] },
-    { title: "South to Nazareth", type: :main, built: false, steps: [
-      { text: "Take Route 3 south through the cave to Nazareth.", done: -> { false } },
+    { title: "South to Nazareth", type: :main, built: true, steps: [
+      { text: "Go through the Nazareth Caves to reach Nazareth.", done: -> { visited?(NAZARETH) } },
       { text: "Earn the Nazareth Seal from Master Jotham at the Seal House.", done: -> { $player.badges[1] } },
     ] },
     { title: "The Quiet Town", type: :main, built: false, steps: [

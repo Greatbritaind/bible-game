@@ -350,3 +350,12 @@ Land,21
     50,LOGGIN,10,13
     25,PIDGEY,10,13
     25,EKANS,10,13
+#-------------------------------
+[120] # Nazareth Caves
+Cave,10
+    35,ZUBAT,13,15
+    30,GEODUDE,13,16
+    15,PARAS,13,15
+    10,DIGLETT,14,16
+    5,ONIX,15
+    5,CLEFAIRY,14
