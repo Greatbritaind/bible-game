@@ -63,17 +63,18 @@ module SpeakerTab
   end
 end
 
-alias __speaker_tab_pbMessageDisplay pbMessageDisplay unless defined?(__speaker_tab_pbMessageDisplay)
-def pbMessageDisplay(msgwindow, message, letterbyletter = true, commandProc = nil)
-  message, name = SpeakerTab.split(message.to_s)
-  tab = nil
-  if name && msgwindow && !msgwindow.disposed?
-    tab = SpeakerTab.create(msgwindow, name)
-  end
-  begin
-    return __speaker_tab_pbMessageDisplay(msgwindow, message, letterbyletter, commandProc)
-  ensure
-    tab&.dispose
-    SpeakerTab.finished
+# Prepended (not aliased) so it chains cleanly with other hooks on pbMessageDisplay.
+module SpeakerTabHook
+  def pbMessageDisplay(msgwindow, message, *args, &block)
+    message, name = SpeakerTab.split(message.to_s)
+    tab = nil
+    tab = SpeakerTab.create(msgwindow, name) if name && msgwindow && !msgwindow.disposed?
+    begin
+      return super(msgwindow, message, *args, &block)
+    ensure
+      tab&.dispose
+      SpeakerTab.finished
+    end
   end
 end
+Object.prepend(SpeakerTabHook) unless Object.ancestors.include?(SpeakerTabHook)
