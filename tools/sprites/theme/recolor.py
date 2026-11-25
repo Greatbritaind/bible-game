@@ -9,7 +9,7 @@ def ramp(l):
     if l<b:
       t=(l-a)/(b-a); return tuple(round(ca[i]+(cb[i]-ca[i])*t) for i in range(3))
   return STOPS[-1][1]
-def recolor(src,dst,sat_keep=0.22,hue_map=None):
+def recolor(src,dst,sat_keep=0.22,hue_map=None,grey_cut=40):
   im=Image.open(src).convert('RGBA'); px=im.load(); cache={}
   for y in range(im.height):
     for x in range(im.width):
@@ -19,7 +19,7 @@ def recolor(src,dst,sat_keep=0.22,hue_map=None):
       if k not in cache:
         h,l,s=colorsys.rgb_to_hls(r/255,g/255,b/255)
         lum=0.299*r+0.587*g+0.114*b
-        if s<sat_keep or (max(r,g,b)-min(r,g,b))<40: cache[k]=ramp(lum)
+        if s<sat_keep or (max(r,g,b)-min(r,g,b))<grey_cut: cache[k]=ramp(lum)
         elif hue_map:
           cache[k]=hue_map(h*360,l,s,k) or k
         else: cache[k]=k
