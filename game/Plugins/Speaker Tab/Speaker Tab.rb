@@ -48,14 +48,14 @@ module SpeakerTab
     tw = probe.text_size(name).width
     probe.dispose
     w = tw + 28
-    h = 32
+    h = 36
     sprite = BitmapSprite.new(w, h, msgwindow.viewport)
     b = sprite.bitmap
     b.fill_rect(0, 0, w, h, WOOD_LO)
     b.fill_rect(2, 2, w - 4, h - 4, WOOD_HI)
     b.fill_rect(4, 4, w - 8, h - 8, WOOD)
     pbSetSystemFont(b)
-    pbDrawTextPositions(b, [[name, w / 2, (h - 26) / 2 - 1, :center, TEXT, SHADOW]])
+    pbDrawTextPositions(b, [[name, w / 2, 7, :center, TEXT, SHADOW]])
     sprite.x = msgwindow.x + 24
     sprite.y = (msgwindow.y > Graphics.height / 2) ? msgwindow.y - h + 6 : msgwindow.y + msgwindow.height - 6
     sprite.z = msgwindow.z + 1
