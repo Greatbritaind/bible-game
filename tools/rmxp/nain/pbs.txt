@@ -1,0 +1,41 @@
+# ---- append to PBS/trainers.txt ----
+#-------------------------------
+[SHEPHERD,Elon]
+LoseText = Too fast for me!
+Pokemon = DODUO,18
+Pokemon = PONYTA,19
+#-------------------------------
+[SPICETRADER,Keziah]
+LoseText = Spicy! You win.
+Pokemon = ODDISH,19
+Pokemon = NIDORANfE,20
+#-------------------------------
+[TENTMAKER,Shimei]
+LoseText = I need that rest now.
+Pokemon = SPEAROW,19
+Pokemon = RATTATA,20
+Pokemon = NIDORANmA,20
+#-------------------------------
+[ELDER,Elkanah]
+LoseText = You're stronger than these old legs.
+Pokemon = NIDORINO,21
+Pokemon = PONYTA,22
+
+# ---- append to PBS/encounters.txt (map ids filled in once the maps exist) ----
+#-------------------------------
+[ROUTE4_ID] # Route 4
+Land,21
+    20,PONYTA,17,21
+    20,DODUO,17,20
+    15,SPEAROW,17,20
+    15,ODDISH,17,20
+    10,NIDORANfE,17,20
+    10,NIDORANmA,17,20
+    10,RATTATA,17,19
+#-------------------------------
+[TOMBS_ID] # Nain tombs
+Cave,8
+    50,GASTLY,18,22
+    25,ZUBAT,18,21
+    15,RATTATA,18,20
+    10,HAUNTER,20,22
