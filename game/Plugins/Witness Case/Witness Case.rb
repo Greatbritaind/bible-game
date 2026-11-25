@@ -284,3 +284,91 @@ def pbWitnessMessengerLeave(event)
   steps = $game_temp.instance_variable_get(:@witness_messenger_path) || []
   WitnessCase.run(event, steps.reverse.map { |d| WitnessCase::BACK[d] } + [steps.empty? ? 2 : WitnessCase::BACK[steps.last]])
 end
+
+#===============================================================================
+# Saves that are already past the wedding: if the player never got the case in
+# Cana, the messenger finds them on the next outdoor map they walk on.
+#===============================================================================
+module WitnessCase
+  MESSENGER_GRAPHIC = "NPC Apprentice"
+  SKIP_MAPS = [86, 87]   # Cana and the wedding house run their own scene
+
+  def self.messenger_due?
+    return false if !$game_variables || $game_variables[28] < 5 || $game_switches[70]
+    return false if !$scene.is_a?(Scene_Map) || $game_temp.in_menu || $game_temp.player_transferring
+    return false if $game_temp.message_window_showing || pbMapInterpreterRunning?
+    return false if $game_player.moving? || SKIP_MAPS.include?($game_map.map_id)
+    return false if !GameData::MapMetadata.try_get($game_map.map_id)&.outdoor_map
+    # Let the map settle, and never cut into a map's own cutscene.
+    @settle = 0 if @settle_map != $game_map.map_id
+    @settle_map = $game_map.map_id
+    @settle += 1
+    return false if @settle < 30
+    return false if $game_map.events.values.any? { |e| e.trigger == 3 && e.list && e.list.length > 1 }
+    true
+  end
+
+  def self.spawn_messenger
+    rpg = RPG::Event.new($game_player.x, $game_player.y)
+    rpg.id = ($game_map.events.keys.max || 0) + 1
+    rpg.name = "Witness messenger"
+    rpg.pages[0].graphic.character_name = MESSENGER_GRAPHIC
+    rpg.pages[0].move_speed = 5
+    rpg.pages[0].through = true
+    ev = Game_Event.new($game_map.map_id, rpg, $game_map)
+    $game_map.events[rpg.id] = ev
+    sprites = $scene.spriteset&.instance_variable_get(:@character_sprites)
+    sprites&.push(Sprite_Character.new(Spriteset_Map.viewport, ev))
+    rpg.id
+  end
+
+  def self.remove_messenger(id)
+    ev = $game_map.events[id] or return
+    sprites = $scene.spriteset&.instance_variable_get(:@character_sprites) || []
+    sprites.select { |s| s.character == ev }.each { |s| s.dispose; sprites.delete(s) }
+    $game_map.events.delete(id)
+  end
+
+  def self.cmd(code, indent, params) = RPG::EventCommand.new(code, indent, params)
+
+  def self.start_late_scene
+    id = spawn_messenger
+    b = "\\b"
+    s = ->(code) { cmd(355, 0, [code]) }
+    t = ->(text, i = 0) { cmd(101, i, [text]) }
+    list = [
+      s.call("pbWitnessMessengerArrive($game_map.events[#{id}])"),
+      s.call("pbExclaim($game_player)"), cmd(106, 0, [16]),
+      t.call("#{b}Messenger: Letter for you! From Chorazin!"),
+      t.call("#{b}Old Asher told me which way you went."),
+      cmd(106, 0, [10]),
+      t.call("The letter is from Ezra."),
+      t.call("\"Word reached me about strange things in Cana."),
+      t.call("Keep what you find there. Keep anything people give you."),
+      t.call("The Law says, \"Don't forget what your eyes have seen.\""),
+      t.call("Bring it all home to me one day. -Ezra\""),
+      s.call("pbReceiveItem(:WITNESSCASE)"),
+      cmd(111, 0, [12, "pbHasWitness?(:WEDDINGCUP)"]),
+      t.call("You put the Wedding Cup in Ezra's case.", 1),
+      cmd(0, 1, []),
+      cmd(411, 0, []),
+      t.call("#{b}Messenger: Oh! This came from Cana too.", 1),
+      t.call("#{b}The Master of the Feast said it's yours.", 1),
+      cmd(355, 1, ["pbAddWitness(:WEDDINGCUP)"]),
+      cmd(0, 1, []),
+      cmd(412, 0, []),
+      s.call("pbWitnessMessengerLeave($game_map.events[#{id}])"),
+      s.call("WitnessCase.remove_messenger(#{id})"),
+      cmd(121, 0, [70, 70, 0]),
+      cmd(0, 0, []),
+    ]
+    pbMapInterpreter.setup(list, 0)
+  end
+end
+
+EventHandlers.add(:on_frame_update, :witness_case_late_messenger,
+  proc {
+    next if !WitnessCase.messenger_due?
+    WitnessCase.start_late_scene
+  }
+)
