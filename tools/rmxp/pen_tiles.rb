@@ -3,7 +3,7 @@ require_relative "stubs.rb"
 path = ARGV[0]
 sets = Marshal.load(File.binread(path))
 outside, inside = sets[1], sets[3]
-PAIRS = { 2704 => [4, 165], 2705 => [3, 165], 2706 => [5, 165], 2707 => [6, 165], 2708 => [5, 166] }
+PAIRS = { 2704 => [4, 165], 2705 => [3, 165], 2706 => [5, 165], 2707 => [6, 165], 2708 => [5, 166], 2709 => [4, 164], 2710 => [3, 164] }
 %i[passages priorities terrain_tags].each do |k|
   src = iv(outside, k); dst = iv(inside, k)
   sd = iv(src, :d); dd = iv(dst, :d)

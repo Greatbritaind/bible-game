@@ -18,8 +18,9 @@ room = ->(x, y) { (y <= 6 && x <= 12) || (x <= 3 && y.between?(7, 10)) }
 [[7, 1253], [8, 1254], [9, 1255]].each { |x, t| set.(1, x, 7, t) }
 
 # --- the animals' pen (FireRed's play area): the wooden fence posts from Outside, copied to row 290 ---
-PEN_L, PEN_R, PEN_BL, PEN_BR, PEN_H = 2704, 2705, 2706, 2707, 2708
-(2..4).each { |y| set.(2, 0, y, PEN_L); set.(2, 4, y, PEN_R) }
+PEN_L, PEN_R, PEN_BL, PEN_BR, PEN_H, PEN_LT, PEN_RT = 2704, 2705, 2706, 2707, 2708, 2709, 2710
+set.(2, 0, 2, PEN_LT); set.(2, 4, 2, PEN_RT)      # capped tops against the back wall
+(3..4).each { |y| set.(2, 0, y, PEN_L); set.(2, 4, y, PEN_R) }
 set.(2, 0, 5, PEN_BL); set.(2, 4, 5, PEN_BR); (1..3).each { |x| set.(2, x, 5, PEN_H) }
 set.(1, 2, 3, 2392); set.(1, 2, 4, 2400)          # straw bedding inside the pen
 set.(2, 1, 1, 2396); set.(2, 1, 2, 2404)          # water jar
