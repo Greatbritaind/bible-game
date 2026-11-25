@@ -7,7 +7,7 @@ MAP = 111
 LAND = [[25, :BELLSPROUT, 12, 14], [20, :MEOWTH, 12, 14], [15, :VENONAT, 12, 15], [15, :SANDSHREW, 12, 15],
         [10, :JIGGLYPUFF, 13, 15], [10, :MACHOP, 13, 15], [5, :GROWLITHE, 14, 15]]
 SECRET = [[50, :TAUROS, 15, 17], [50, :PINSIR, 15, 17]]
-PATCH = [35, 26, 4, 16]   # x, y, width, height of the grass behind the boulder
+PATCH = [35, 41, 4, 16]   # x, BOTTOM y, width, height: Essentials sizes an event up and right from its spot
 
 # --- PBS/encounters.txt ---
 pbs = File.join(game, "PBS/encounters.txt")
