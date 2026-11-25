@@ -22,19 +22,32 @@ module SpeakerTab
   @last_code = nil
   @last_frame = -9999
 
-  # Returns [message without the name, name or nil]
+  # Returns [message without the name, name or nil, true if the name is new]
   def self.split(message)
     if (m = NAME_RE.match(message))
       @last_name = m[2]
       @last_code = m[1].downcase
-      return [m[1] + message[m[0].length..], m[2]]
+      return [m[1] + message[m[0].length..], m[2], true]
     end
     code = CODE_RE.match(message)&.[](1)&.downcase
     if code && code == @last_code && Graphics.frame_count - @last_frame <= KEEP_FRAMES
-      return [message, @last_name]
+      return [message, @last_name, false]
     end
     @last_name = @last_code = nil
-    [message, nil]
+    [message, nil, false]
+  end
+
+  # The web player's read aloud speaks each box. Say the name only when the
+  # speaker changes ("Shepherd. Want to battle?"), not on every box.
+  def self.read_aloud_name(name, message)
+    return if !defined?(ReadAloud)
+    rest = ReadAloud.clean(message)
+    ReadAloud.say("#{name}. #{rest}")
+    # so read aloud doesn't say the same box again without the name
+    ReadAloud.instance_variable_set(:@last_text, rest)
+    ReadAloud.instance_variable_set(:@last_frame, Graphics.frame_count)
+  rescue StandardError
+    nil
   end
 
   def self.finished
@@ -66,7 +79,9 @@ end
 # Prepended (not aliased) so it chains cleanly with other hooks on pbMessageDisplay.
 module SpeakerTabHook
   def pbMessageDisplay(msgwindow, message, *args, &block)
-    message, name = SpeakerTab.split(message.to_s)
+    original = message.to_s
+    message, name, new_name = SpeakerTab.split(original)
+    SpeakerTab.read_aloud_name(name, message) if new_name && msgwindow
     tab = nil
     tab = SpeakerTab.create(msgwindow, name) if name && msgwindow && !msgwindow.disposed?
     begin
