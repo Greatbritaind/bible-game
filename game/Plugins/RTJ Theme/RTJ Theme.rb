@@ -94,6 +94,7 @@ module RTJLoadWords
       t[0] = _INTL("Seals:") if t[0] == _INTL("Badges:")
       t[0] = _INTL("Scroll:") if t[0] == _INTL("Pokédex:")
     end
+    textpos[0][2] -= 3 if textpos.length == 1   # New Game / Options: center on the smaller panel
     super
   end
 end
