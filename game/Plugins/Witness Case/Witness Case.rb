@@ -6,7 +6,7 @@
 #   pbAddWitness(:WEDDINGCUP)  - mark one found, show its picture and message
 #   pbWitnessCount             - how many are found (used at the ending)
 #   pbHasWitness?(:ROOFTILE)   - true if that one is found
-#   pbWitnessCaseMenu          - the case's list (also opens from the Bag)
+#   pbWitnessCaseMenu          - the Witness Case screen (also opens from the Bag)
 #
 # Pictures: Graphics/Witness/<ID>.png (48 x 48)
 #===============================================================================
@@ -96,27 +96,116 @@ def pbAddWitness(id)
   true
 end
 
-# The case's own list: "3 of 11 found", found items by name, the rest as "???".
-def pbWitnessCaseMenu
-  index = 0
-  loop do
-    commands = WitnessCase::ITEMS.map { |id, name, _| pbHasWitness?(id) ? name : "???" }
-    commands.push(_INTL("Close"))
-    title = _INTL("Ezra's case: {1} of {2} found.", pbWitnessCount, WitnessCase::ITEMS.length)
-    index = pbMessage(title, commands, commands.length, nil, index)
-    break if index < 0 || index >= WitnessCase::ITEMS.length
-    id, name, text = WitnessCase::ITEMS[index]
-    if pbHasWitness?(id)
-      shown = WitnessCase.show_picture(id)
-      begin
-        pbMessage(_INTL("\\c[1]{1}\\c[0]\n{2}", name, text))
-      ensure
-        WitnessCase.hide_picture(shown)
-      end
-    else
-      pbMessage(_INTL("You haven't found this one yet."))
-    end
+#===============================================================================
+# The Witness Case screen: a parchment page with the list of 11 on the right,
+# and the highlighted item's picture and description on the left.
+# Up/Down scroll through the list. Back closes it.
+#===============================================================================
+class WitnessCaseScreen
+  VISIBLE = 8                         # rows shown at once
+  ROW_H   = 32
+  LIST_X  = 256                       # list column
+  LIST_Y  = 56
+  INK     = Color.new(72, 48, 32)     # dark brown text
+  INK_SH  = Color.new(208, 192, 160)  # its shadow
+  FAINT   = Color.new(150, 130, 105)  # "???" rows
+  PAPER   = Color.new(248, 240, 216)
+  EDGE    = Color.new(40, 48, 72)
+  ROWHI   = Color.new(232, 216, 176)  # highlighted row
+
+  def initialize
+    @index = 0
+    @top = 0
   end
+
+  def items = WitnessCase::ITEMS
+
+  def run
+    @viewport = Viewport.new(0, 0, Graphics.width, Graphics.height)
+    @viewport.z = 99999
+    @page = BitmapSprite.new(Graphics.width, Graphics.height, @viewport)
+    pbSetSystemFont(@page.bitmap)
+    @icon = Sprite.new(@viewport)
+    @icon.zoom_x = @icon.zoom_y = 2
+    refresh
+    pbFadeInAndShow({ "page" => @page, "icon" => @icon }) { update_frame }
+    loop do
+      update_frame
+      if Input.repeat?(Input::DOWN) && @index < items.length - 1
+        @index += 1
+        pbPlayCursorSE
+        refresh
+      elsif Input.repeat?(Input::UP) && @index > 0
+        @index -= 1
+        pbPlayCursorSE
+        refresh
+      elsif Input.trigger?(Input::BACK)
+        pbPlayCloseMenuSE
+        break
+      end
+    end
+    pbFadeOutAndHide({ "page" => @page, "icon" => @icon }) { update_frame }
+  ensure
+    @icon&.bitmap = nil
+    @icon&.dispose
+    @page&.dispose
+    @viewport&.dispose
+  end
+
+  def update_frame
+    Graphics.update
+    Input.update
+  end
+
+  def refresh
+    @top = @index if @index < @top
+    @top = @index - VISIBLE + 1 if @index >= @top + VISIBLE
+    b = @page.bitmap
+    b.clear
+    w, h = Graphics.width, Graphics.height
+    b.fill_rect(0, 0, w, h, EDGE)
+    b.fill_rect(4, 4, w - 8, h - 8, PAPER)
+    text = []
+    text.push([_INTL("Ezra's Case"), 20, 14, :left, INK, INK_SH])
+    text.push([_INTL("{1} of {2} found", pbWitnessCount, items.length), w - 20, 14, :right, INK, INK_SH])
+    b.fill_rect(16, 46, w - 32, 2, INK)
+    # the list
+    VISIBLE.times do |row|
+      i = @top + row
+      break if i >= items.length
+      id, name, _ = items[i]
+      y = LIST_Y + (row * ROW_H)
+      b.fill_rect(LIST_X - 8, y, w - LIST_X - 8, ROW_H - 2, ROWHI) if i == @index
+      found = pbHasWitness?(id)
+      text.push([(i == @index ? "> " : "  ") + (found ? name : "???"), LIST_X, y + 4, :left, found ? INK : FAINT, found ? INK_SH : nil])
+    end
+    # scroll arrows when there are more rows above or below
+    text.push(["^", w - 28, LIST_Y - 10, :left, INK, nil]) if @top > 0
+    text.push(["v", w - 28, LIST_Y + (VISIBLE * ROW_H) - 14, :left, INK, nil]) if @top + VISIBLE < items.length
+    # the picture frame
+    fx, fy, box = 40, 64, 120
+    b.fill_rect(fx, fy, box, box, EDGE)
+    b.fill_rect(fx + 3, fy + 3, box - 6, box - 6, Color.new(255, 250, 236))
+    pbDrawTextPositions(b, text)
+    id, name, desc = items[@index]
+    if pbHasWitness?(id) && pbResolveBitmap(WitnessCase.picture_file(id))
+      @icon.bitmap = RPG::Cache.load_bitmap("", WitnessCase.picture_file(id))
+      @icon.x = fx + ((box - (@icon.bitmap.width * 2)) / 2)
+      @icon.y = fy + ((box - (@icon.bitmap.height * 2)) / 2)
+      @icon.visible = true
+      body = desc
+    else
+      @icon.visible = false
+      pbDrawTextPositions(b, [["?", fx + (box / 2), fy + (box / 2) - 14, :center, FAINT, nil]])
+      body = _INTL("You haven't found this one yet.")
+    end
+    # description under the picture, down the left side
+    drawTextEx(b, 20, fy + box + 14, LIST_X - 44, 4, body, INK, INK_SH)
+  end
+end
+
+def pbWitnessCaseMenu
+  WitnessCaseScreen.new.run
 end
 
 ItemHandlers::UseFromBag.add(:WITNESSCASE, proc { |item|
