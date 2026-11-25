@@ -69,7 +69,7 @@ module SpeakerTab
     b.fill_rect(4, 4, w - 8, h - 8, WOOD)
     pbSetSystemFont(b)
     pbDrawTextPositions(b, [[name, w / 2, 7, :center, TEXT, SHADOW]])
-    sprite.x = msgwindow.x + 24
+    sprite.x = msgwindow.x + 30
     sprite.y = (msgwindow.y > Graphics.height / 2) ? msgwindow.y - h + 6 : msgwindow.y + msgwindow.height - 6
     sprite.z = msgwindow.z + 1
     sprite

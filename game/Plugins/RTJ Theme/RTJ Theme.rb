@@ -29,3 +29,29 @@ module MessageConfig
     return pbResolveBitmap(RTJ_MENU) || pbDefaultSystemFrame || ""
   end
 end
+
+# Text colors drawn by individual screens, to match the repainted pictures.
+module RTJTheme
+  INK        = Color.new(43, 33, 24)
+  INK_SHADOW = Color.new(214, 194, 150)
+  CREAM      = Color.new(246, 234, 208)
+  CREAM_SHADOW = Color.new(40, 24, 12)
+
+  def self.set(klass, name, color)
+    return if !klass
+    klass.send(:remove_const, name) if klass.const_defined?(name, false)
+    klass.const_set(name, color)
+  end
+
+  def self.apply
+    set(Battle::Scene, :MESSAGE_BASE_COLOR, INK)
+    set(Battle::Scene, :MESSAGE_SHADOW_COLOR, INK_SHADOW)
+    set(Battle::Scene::PokemonDataBox, :NAME_BASE_COLOR, INK)
+    set(Battle::Scene::PokemonDataBox, :NAME_SHADOW_COLOR, INK_SHADOW)
+    set(PokemonPartyPanel, :TEXT_BASE_COLOR, CREAM)
+    set(PokemonPartyPanel, :TEXT_SHADOW_COLOR, CREAM_SHADOW)
+  rescue NameError
+    nil
+  end
+end
+RTJTheme.apply
