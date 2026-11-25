@@ -72,3 +72,29 @@ module Settings
   end
 end
 MenuHandlers.each(:pause_menu) { |option, hash| hash["name"] = _INTL("Ezra's Scroll") if option == :pokedex }
+
+# Continue / New Game screen: ink text on the new panels, and the game's own words.
+module RTJTheme
+  def self.apply_load
+    set(PokemonLoadPanel, :TEXT_COLOR, INK)
+    set(PokemonLoadPanel, :TEXT_SHADOW_COLOR, INK_SHADOW)
+    set(PokemonLoadPanel, :MALE_TEXT_COLOR, Color.new(40, 84, 160))
+    set(PokemonLoadPanel, :MALE_TEXT_SHADOW_COLOR, Color.new(200, 206, 200))
+    set(PokemonLoadPanel, :FEMALE_TEXT_COLOR, Color.new(200, 24, 16))
+    set(PokemonLoadPanel, :FEMALE_TEXT_SHADOW_COLOR, Color.new(226, 200, 170))
+  rescue NameError
+    nil
+  end
+end
+RTJTheme.apply_load
+
+module RTJLoadWords
+  def pbDrawTextPositions(bitmap, textpos)
+    textpos.each do |t|
+      t[0] = _INTL("Seals:") if t[0] == _INTL("Badges:")
+      t[0] = _INTL("Scroll:") if t[0] == _INTL("Pokédex:")
+    end
+    super
+  end
+end
+PokemonLoadPanel.prepend(RTJLoadWords) unless PokemonLoadPanel.ancestors.include?(RTJLoadWords)
