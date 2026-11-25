@@ -6618,3 +6618,12 @@ Pocket = 8
 Price = 0
 Flags = KeyItem
 Description = Light leather sandals for running. Hold the Back button while you move.
+#-------------------------------
+[WITNESSCASE]
+Name = Witness Case
+NamePlural = Witness Cases
+Pocket = 8
+Price = 0
+FieldUse = Direct
+Flags = KeyItem
+Description = Ezra's case, for the things you witness.

@@ -78,6 +78,12 @@ module RTJGuide
       steps: [
         { text: "Visit the old courier's house on Route 2.", done: -> { false } },
       ] },
+    { title: "The Witness Case", type: :side, built: true,
+      appears: -> { $game_switches[70] },  # "Witness Case started"
+      steps: [
+        # Finishes at the ending scene with Ezra, never by count, so no one gets stuck.
+        { text: "Find things people give you. Keep them in Ezra's case.", done: -> { false } },
+      ] },
     # Ezra's scroll milestones. Switch on (built: true) when Ezra has something to give at each one.
     { title: "Write It All Down", type: :side, built: false,
       appears: -> { $player.has_pokedex },
