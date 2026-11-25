@@ -7,7 +7,7 @@ tab = iv(m, :data); d = tab.d
 w, h, z = d[4, 12].unpack("l<3")
 v = Array.new(w * h * z, 0)
 set = ->(l, x, y, t) { v[l * w * h + y * w + x] = t }
-FLOOR, WALL_T, WALL_B, VOID = 2408, 1399, 1407, 542
+FLOOR, WALL_T, WALL_B, VOID = 2408, 2568, 2569, 542   # grey Nazareth walls
 room = ->(x, y) { (y <= 6 && x <= 12) || (x <= 3 && y.between?(7, 10)) }
 (0...h).each { |y| (0...w).each { |x|
   if room.(x, y) then set.(0, x, y, FLOOR) else set.(1, x, y, VOID) end
