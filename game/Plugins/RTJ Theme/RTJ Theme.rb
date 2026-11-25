@@ -50,8 +50,25 @@ module RTJTheme
     set(Battle::Scene::PokemonDataBox, :NAME_SHADOW_COLOR, INK_SHADOW)
     set(PokemonPartyPanel, :TEXT_BASE_COLOR, CREAM)
     set(PokemonPartyPanel, :TEXT_SHADOW_COLOR, CREAM_SHADOW)
+    # Options: the chosen row in blue, the chosen setting in terracotta
+    set(Window_PokemonOption, :SEL_NAME_BASE_COLOR, Color.new(40, 84, 160))
+    set(Window_PokemonOption, :SEL_NAME_SHADOW_COLOR, Color.new(200, 206, 200))
+    set(Window_PokemonOption, :SEL_VALUE_BASE_COLOR, Color.new(164, 83, 47))
+    set(Window_PokemonOption, :SEL_VALUE_SHADOW_COLOR, Color.new(226, 200, 170))
   rescue NameError
     nil
   end
 end
 RTJTheme.apply
+
+# The Pokédex is Ezra's Scroll.
+module Settings
+  def self.pokedex_names
+    return [
+      [_INTL("Ezra's Scroll"), 2],
+      [_INTL("Johto Pokédex"), 1],
+      _INTL("National Pokédex")
+    ]
+  end
+end
+MenuHandlers.each(:pause_menu) { |option, hash| hash["name"] = _INTL("Ezra's Scroll") if option == :pokedex }
