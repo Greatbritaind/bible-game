@@ -50,7 +50,7 @@ tmpl = iv(m, :events)[3]
 mon(m, tmpl, "MILTANK", 8, 6, "Miltank is chewing slowly. It looks happy.")
 mon(m, tmpl, "DODUO", 13, 7, "Doduo's two heads are arguing again.")
 new_event(m, tmpl, "Day Care sign", 9, 12,
-          [cmd(101, 0, ["NAZARETH DAY CARE"]), cmd(401, 0, ["We'll care for your Pokémon."])])
+          [cmd(101, 0, ["NAZARETH DAY CARE\nWe'll care for your Pokémon."])])
 # signpost tile under the sign event (the wooden post used for the cliff sign)
 d = iv(iv(m, :data), :d); w, h = d[4, 8].unpack("l<2")
 v = d[20..].unpack("s<*"); v[2 * w * h + 12 * w + 9] = 1337
