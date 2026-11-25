@@ -180,7 +180,7 @@ class WitnessCaseScreen
       text.push([(i == @index ? "> " : "  ") + (found ? name : "???"), LIST_X, y + 4, :left, found ? INK : FAINT, found ? INK_SH : nil])
     end
     # scroll arrows when there are more rows above or below
-    text.push(["^", w - 28, LIST_Y - 10, :left, INK, nil]) if @top > 0
+    text.push(["^", w - 28, LIST_Y - 4, :left, INK, nil]) if @top > 0
     text.push(["v", w - 28, LIST_Y + (VISIBLE * ROW_H) - 14, :left, INK, nil]) if @top + VISIBLE < items.length
     # the picture frame
     fx, fy, box = 40, 64, 120
@@ -193,7 +193,7 @@ class WitnessCaseScreen
       @icon.x = fx + ((box - (@icon.bitmap.width * 2)) / 2)
       @icon.y = fy + ((box - (@icon.bitmap.height * 2)) / 2)
       @icon.visible = true
-      body = desc
+      body = desc.sub(/\s+((?:[1-3] )?[A-Z][a-z]+ \d+:[\d-]+)\z/) { "\n#{$1}" }   # Scripture on its own line
     else
       @icon.visible = false
       pbDrawTextPositions(b, [["?", fx + (box / 2), fy + (box / 2) - 14, :center, FAINT, nil]])
