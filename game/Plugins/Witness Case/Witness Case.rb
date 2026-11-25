@@ -292,13 +292,14 @@ end
 module WitnessCase
   MESSENGER_GRAPHIC = "NPC Apprentice"
   SKIP_MAPS = [86, 87]   # Cana and the wedding house run their own scene
+  OUTDOOR = [111, 112]   # Route 3 and Nazareth (not flagged Outdoor in map_metadata.txt)
 
   def self.messenger_due?
     return false if !$game_variables || $game_variables[28] < 5 || $game_switches[70]
     return false if !$scene.is_a?(Scene_Map) || $game_temp.in_menu || $game_temp.player_transferring
     return false if $game_temp.message_window_showing || pbMapInterpreterRunning?
     return false if $game_player.moving? || SKIP_MAPS.include?($game_map.map_id)
-    return false if !GameData::MapMetadata.try_get($game_map.map_id)&.outdoor_map
+    return false if !GameData::MapMetadata.try_get($game_map.map_id)&.outdoor_map && !OUTDOOR.include?($game_map.map_id)
     # Let the map settle, and never cut into a map's own cutscene.
     @settle = 0 if @settle_map != $game_map.map_id
     @settle_map = $game_map.map_id
