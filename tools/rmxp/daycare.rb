@@ -1,6 +1,6 @@
 # New Nazareth Day Care interior: a first-century take on FireRed's Day Care.
 # L-shaped like the building outside: the left side runs deeper, the door is on the right.
-require_relative "../../stubs.rb"
+require_relative "stubs.rb"
 src, out = ARGV
 m = Marshal.load(File.binread(src))
 tab = iv(m, :data); d = tab.d
@@ -17,13 +17,13 @@ room = ->(x, y) { (y <= 6 && x <= 12) || (x <= 3 && y.between?(7, 10)) }
 [[7, 1245], [8, 1246], [9, 1247]].each { |x, t| set.(1, x, 6, t) }
 [[7, 1253], [8, 1254], [9, 1255]].each { |x, t| set.(1, x, 7, t) }
 
-# --- the animals' corner (FireRed's little garden): a cloth shelter over straw ---
-[[1, 2464], [2, 2465], [3, 2466]].each { |x, t| set.(2, x, 2, t) }
-[[1, 2472], [2, 2473], [3, 2474]].each { |x, t| set.(2, x, 3, t) }
-[[1, 2480], [3, 2482]].each { |x, t| set.(2, x, 4, t) }
-set.(1, 2, 4, 2392); set.(1, 2, 5, 2400)          # straw bedding under the shelter
-set.(2, 0, 1, 2396); set.(2, 0, 2, 2404)          # water jar beside it
-set.(2, 4, 1, 2393); set.(2, 4, 2, 2401)          # basket of feed
+# --- the animals' pen (FireRed's play area): the wooden fence posts from Outside, copied to row 290 ---
+PEN_L, PEN_R, PEN_BL, PEN_BR, PEN_H = 2704, 2705, 2706, 2707, 2708
+(2..4).each { |y| set.(2, 0, y, PEN_L); set.(2, 4, y, PEN_R) }
+set.(2, 0, 5, PEN_BL); set.(2, 4, 5, PEN_BR); (1..3).each { |x| set.(2, x, 5, PEN_H) }
+set.(1, 2, 3, 2392); set.(1, 2, 4, 2400)          # straw bedding inside the pen
+set.(2, 1, 1, 2396); set.(2, 1, 2, 2404)          # water jar
+set.(2, 3, 1, 2393); set.(2, 3, 2, 2401)          # basket of feed
 
 # --- back wall: wall hanging, oven, shelves of pots (FireRed's counter and PC) ---
 set.(2, 6, 0, 2397); set.(2, 6, 1, 2405)
@@ -33,9 +33,12 @@ set.(2, 8, 1, 2409); set.(2, 8, 2, 2417)          # oven
 set.(2, 12, 1, 2414); set.(2, 12, 2, 2422)
 
 # --- table with four seats (FireRed's table and stools) ---
-# (no rug: the reed tiles read as beds)
+# striped rug under it (the tileset's rug, stretched to 4x4 from its edges and middle)
+RUG = [[1144, 1145, 1146], [1152, 1153, 1154], [1160, 1161, 1162]]
+(2..5).each { |y| r = y == 2 ? 0 : (y == 5 ? 2 : 1)
+  (8..11).each { |x| c = x == 8 ? 0 : (x == 11 ? 2 : 1); set.(1, x, y, RUG[r][c]) } }
 set.(2, 9, 3, 2086); set.(2, 10, 3, 2087); set.(2, 9, 4, 2094); set.(2, 10, 4, 2095)
-set.(1, 8, 3, 1682); set.(1, 8, 4, 1682); set.(1, 11, 3, 1683); set.(1, 11, 4, 1683)
+set.(2, 8, 3, 1682); set.(2, 8, 4, 1682); set.(2, 11, 3, 1683); set.(2, 11, 4, 1683)
 
 # --- plants by the walls, like FireRed's ---
 set.(2, 12, 5, 1772); set.(2, 12, 6, 1780)
