@@ -13,18 +13,18 @@ belly=lab==13
 bottom=np.zeros_like(belly)
 for x in range(W):
   ys=np.where(belly[:,x])[0]
-  if len(ys): bottom[ys[ys>=ys.max()-6],x]=True
-center=belly&~bottom&(((xx-43)/17)**2+((yy-86)/13)**2<=1)
+  if len(ys): bottom[ys[ys>=ys.max()-11],x]=True
+center=belly&~bottom&(((xx-43)/16)**2+((yy-82)/11)**2<=1)
 side=belly&~bottom&~center
 regions={
- 1: center,          # Items: middle of the bag
+ 1: center,                                   # Items: middle of the bag
  2: L(5),                                     # Medicine: right flap
- 3: side&(xx>=43),                   # Poké Balls: right side
- 4: fill&~L(5,7,8,13,15,17,18,20),            # TMs & HMs: the strap and cords
+ 3: side&(xx>=43),                            # Poké Balls: right side
+ 4: bottom&(xx>=56),                          # TMs & HMs: bottom right
  5: L(7),                                     # Berries: left flap
- 6: L(8,15,17,18,20),                         # Mail: the toggle and ties
- 7: side&(xx<43),                    # Battle Items: left side
- 8: bottom,                           # Key Items: the bottom
+ 6: bottom&(xx>=30)&(xx<56),                  # Mail: bottom middle
+ 7: side&(xx<43),                             # Battle Items: left side
+ 8: bottom&(xx<30),                           # Key Items: bottom left
 }
 RED=np.array([226,64,58]); A=0.55
 def canvas(arr):
@@ -42,7 +42,7 @@ for k,m in regions.items():
   a[sel,:3]=(a[sel,:3]*(1-A)+RED*A).round()
   img=canvas(a); img.save(f'out/bag_{k}.png'); img.save(f'out/bag_{k}_f.png')
 # check every fill pixel of the bag body belongs somewhere
-cover=sum(m.astype(int) for m in regions.values()); print('overlap px',(cover>1).sum(),'uncovered fill px',((cover==0)&fill).sum())
+cover=sum(m.astype(int) for m in regions.values()); print('overlap px',(cover>1).sum(),'uncovered leather px',((cover==0)&(belly|L(5,7))).sum())
 G=(232,214,170,255)
 names=['Items','Medicine','Poké Balls','TMs & HMs','Berries','Mail','Battle Items','Key Items']
 sheet=Image.new('RGBA',(4*140,2*150),G)
