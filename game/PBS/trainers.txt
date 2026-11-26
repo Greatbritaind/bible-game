@@ -105,7 +105,7 @@ Pokemon = SQUIRTLE,5
 [ZEALOT,Simeon]
 LoseText = Fine. Go. But the fight is coming.
 Pokemon = MANKEY,17
-Pokemon = SANDSHREW,17
+Pokemon = SKORUPI,17
 #-------------------------------
 [ZEALOTW,Noa]
 LoseText = You fight well. Think about joining us.
@@ -189,7 +189,7 @@ Pokemon = BELLSPROUT,9
 #-------------------------------
 [ROMANSOLDIER,Marcus]
 LoseText = Hm. You fight better than you look.
-Pokemon = SPEAROW,6
+Pokemon = LILLIPUP,6
 Pokemon = RATTATA,6
 #-------------------------------
 [ROMANSOLDIER,Lucius]
@@ -199,7 +199,7 @@ Pokemon = RATTATA,6
 #-------------------------------
 [PHARISEE,Eliab]
 LoseText = Well fought. Wisdom and courage go together.
-Pokemon = ABRA,12
+Pokemon = EEVEE,12
 Pokemon = DROWZEE,13
 #-------------------------------
 [ELDER,Abner]
@@ -210,7 +210,7 @@ Pokemon = MACHOP,13
 [ZEALOT,Ezer]
 LoseText = The Son of the Father will hear of this.
 Pokemon = MANKEY,10
-Pokemon = SANDSHREW,10
+Pokemon = SKORUPI,10
 #-------------------------------
 [ZEALOTW,Tova]
 LoseText = You fight well, for a courier.
@@ -228,18 +228,18 @@ Pokemon = GOLDEEN,13
 #-------------------------------
 [LEADER_Hannah,Hannah]
 LoseText = Good things take time. You have earned this.
-Pokemon = ODDISH,12
-Pokemon = WEEPINBELL,14
-    Moves = VINEWHIP,WRAP,TACKLE
+Pokemon = BELLSPROUT,12
+Pokemon = PETILIL,13
+Pokemon = SKIDDO,14
 #-------------------------------
 [APPRENTICE,Boaz]
 LoseText = Cracked like a bad stone.
 Pokemon = GEODUDE,15
-Pokemon = DIGLETT,15
+Pokemon = ROGGENROLA,15
 #-------------------------------
 [STONECUTTERF,Abigail]
 LoseText = I'll have to dig deeper.
-Pokemon = CUBONE,16
+Pokemon = ROGGENROLA,16
 #-------------------------------
 [STONECUTTER,Tobiah]
 LoseText = Even rock breaks, I guess.
@@ -249,7 +249,7 @@ Pokemon = ONIX,17
 [ELDER,Amos]
 LoseText = You've got real grit.
 Pokemon = RHYHORN,17
-Pokemon = SANDSHREW,17
+Pokemon = GEODUDE,17
 #-------------------------------
 [LEADER_Jotham,Jotham]
 LoseText = Solid work. You earned this.
@@ -259,8 +259,8 @@ Pokemon = RHYHORN,21
 #-------------------------------
 [SHEPHERD,Gad]
 LoseText = Hannah will not go this easy on you!
-Pokemon = HOPPIP,10
-Pokemon = SUNKERN,10
+Pokemon = ODDISH,10
+Pokemon = PETILIL,10
 #-------------------------------
 [WEAVER,Miriam]
 LoseText = My threads are all tangled up!
@@ -270,55 +270,49 @@ Pokemon = ODDISH,11
 [SPICETRADER,Tirzah]
 LoseText = Sweet, like ripe grapes. You may pass.
 Pokemon = BELLSPROUT,11
-Pokemon = HOPPIP,12
+Pokemon = ODDISH,12
 #-------------------------------
 # Route 3 (map 111): Cana to the Nazareth caves
 #-------------------------------
 [SHEPHERD,Caleb]
 LoseText = My goats would laugh at me.
-Pokemon = PONYTA,14
-Pokemon = DODUO,14
+Pokemon = MAREEP,14
+Pokemon = WOOLOO,14
 #-------------------------------
 [BAKER,Seth]
 LoseText = My bread rose better than my team.
-Pokemon = RATTATA,13
-Pokemon = SPEAROW,13
-Pokemon = MEOWTH,14
+Pokemon = LILLIPUP,14
 #-------------------------------
 [WEAVER,Mara]
 LoseText = My threads came loose!
-Pokemon = METAPOD,14
-Pokemon = BUTTERFREE,15
+Pokemon = PETILIL,14
+Pokemon = COMBEE,15
 #-------------------------------
 [TENTMAKER,Levi]
 LoseText = Ripped like an old tent.
-Pokemon = SANDSHREW,14
-Pokemon = MANKEY,15
+Pokemon = SKIDDO,15
 #-------------------------------
 [ELDER_F,Hulda]
 LoseText = Oh my. You're quick, child.
-Pokemon = PARAS,14
-Pokemon = VENONAT,15
+Pokemon = MILTANK,15
 #-------------------------------
 [LITTLEGIRL1,Talia]
 LoseText = Don't tell my brother.
-Pokemon = JIGGLYPUFF,13
-Pokemon = NIDORANfE,14
+Pokemon = PIDOVE,13
+Pokemon = PICHU,14
 #-------------------------------
 [PHARISEE,Joel]
 LoseText = A good lesson. I will remember it.
 Pokemon = DROWZEE,15
-Pokemon = SLOWPOKE,15
 #-------------------------------
 [SPICETRADER,Adina]
 LoseText = Too spicy for me!
-Pokemon = EKANS,14
-Pokemon = KOFFING,15
+Pokemon = NUMEL,15
 #-------------------------------
 [ELDER,Omri]
 LoseText = These old bones need a rest.
-Pokemon = GEODUDE,15
-Pokemon = SANDSHREW,15
+Pokemon = MACHOP,15
+Pokemon = TAUROS,15
 #-------------------------------
 [STONECUTTER,Hiram]
 LoseText = Ha! You're ready for Master Jotham.
@@ -333,4 +327,4 @@ Pokemon = SANDSHREW,18
 [WEAVER,Judith]
 LoseText = You're strong! You're ready for Nazareth.
 Pokemon = PARAS,18
-Pokemon = VENONAT,18
+Pokemon = BUTTERFREE,18

@@ -2,7 +2,7 @@
 #-------------------------------
 [SHEPHERD,Elon]
 LoseText = Too fast for me!
-Pokemon = DODUO,18
+Pokemon = SKIDDO,18
 Pokemon = PONYTA,19
 #-------------------------------
 [SPICETRADER,Keziah]
@@ -12,7 +12,7 @@ Pokemon = NIDORANfE,20
 #-------------------------------
 [TENTMAKER,Shimei]
 LoseText = I need that rest now.
-Pokemon = SPEAROW,19
+Pokemon = PIDOVE,19
 Pokemon = RATTATA,20
 Pokemon = NIDORANmA,20
 #-------------------------------
@@ -26,8 +26,8 @@ Pokemon = PONYTA,22
 [ROUTE4_ID] # Route 4
 Land,21
     20,PONYTA,17,21
-    20,DODUO,17,20
-    15,SPEAROW,17,20
+    20,SKIDDO,17,20
+    15,MAREEP,17,20
     15,ODDISH,17,20
     10,NIDORANfE,17,20
     10,NIDORANmA,17,20
