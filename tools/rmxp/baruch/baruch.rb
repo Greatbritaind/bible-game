@@ -1,4 +1,5 @@
 # Turn Britain's NPC into Baruch's first scroll check (10 caught -> Amulet Coin).
+# Counts only the 153 on Ezra's Scroll (regional dex 0), not older Pokémon kept from earlier saves.
 # Usage: ruby baruch.rb DATA_DIR MAP_ID EVENT_ID
 # Keeps the event's graphic, position and movement; replaces its pages.
 require_relative "../stubs.rb"
@@ -29,8 +30,8 @@ pages = iv(ev, :pages); base = pages.find { |p| !iv(iv(p, :graphic), :character_
 
 def check(i)
   [
-    script(i, "$game_variables[#{VAR}] = $player.pokedex.owned_count"),
-    cmd(111, i, [12, "$player.pokedex.owned_count >= 10"]),
+    script(i, "$game_variables[#{VAR}] = $player.pokedex.owned_count(0)"),
+    cmd(111, i, [12, "$player.pokedex.owned_count(0) >= 10"]),
     say(i + 1, "\\bYou've caught \\v[#{VAR}] kinds! Ezra will be so happy."),
     say(i + 1, "\\bHe told me to give you this."),
     script(i + 1, "pbReceiveItem(:AMULETCOIN)"),
